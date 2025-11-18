@@ -103,7 +103,6 @@ class WebChatHandler(SimpleHTTPRequestHandler):
     def handle_stream_chat(self, data):
         """处理流式聊天请求"""
         from chat_core import ChatBot
-        import time
         
         if not data or 'message' not in data:
             self.send_json_response({"status": "error", "message": "缺少消息内容"})
@@ -128,32 +127,24 @@ class WebChatHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"status": "error", "message": "聊天机器人未初始化"})
             return
         
-        # 设置流式响应头
+        # 设置流式响应头 - 使用普通文本而不是chunked encoding
         self.send_response(200)
         self.send_header('Content-type', 'text/plain; charset=utf-8')
         self.send_header('Cache-Control', 'no-cache')
-        self.send_header('Transfer-Encoding', 'chunked')
         self.end_headers()
         
-        # 流式响应
+        # 流式响应 - 直接发送数据，不使用chunked encoding
         try:
             for chunk in chat_bot.stream_chat(user_message):
                 if chunk:
-                    # 发送chunked编码的数据
-                    chunk_data = chunk.encode('utf-8')
-                    chunk_size = hex(len(chunk_data))[2:].encode('utf-8')
-                    self.wfile.write(chunk_size + b'\r\n' + chunk_data + b'\r\n')
+                    # 直接发送数据，不添加chunked编码
+                    self.wfile.write(chunk.encode('utf-8'))
                     self.wfile.flush()
-            
-            # 发送结束标记
-            self.wfile.write(b'0\r\n\r\n')
-            
+                    
         except Exception as e:
             # 发送错误信息
-            error_msg = f"流式响应错误: {str(e)}".encode('utf-8')
-            chunk_size = hex(len(error_msg))[2:].encode('utf-8')
-            self.wfile.write(chunk_size + b'\r\n' + error_msg + b'\r\n')
-            self.wfile.write(b'0\r\n\r\n')
+            error_msg = f"流式响应错误: {str(e)}"
+            self.wfile.write(error_msg.encode('utf-8'))
     
     def send_json_response(self, data):
         """发送JSON响应"""

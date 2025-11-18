@@ -88,6 +88,7 @@
         <div class="form-group">
             <input type="text" id="newPromptName" placeholder="新提示词名称">
             <button id="savePromptAs" class="btn-primary">另存为</button>
+            <button id="renamePrompt" class="btn-secondary">重命名当前</button>
             <button id="deletePrompt" class="btn-danger">删除当前</button>
         </div>
     </template>
@@ -101,9 +102,10 @@
             </select>
         </div>
         <div class="form-group">
-            <input type="text" id="newSaveName" placeholder="新存档名称">
+            <input type="text" id="newSaveName" placeholder="存档名称">
             <button id="saveChat" class="btn-primary">保存聊天</button>
             <button id="loadChat" class="btn-secondary">加载选中</button>
+            <button id="renameSave" class="btn-secondary">重命名选中</button>
             <button id="deleteSave" class="btn-danger">删除选中</button>
         </div>
     </template>
@@ -112,14 +114,24 @@
     <template id="resourcesTemplate">
         <div class="form-group">
             <label>资源文件:</label>
-            <select id="resourcesSelect" size="10">
-                <option value="">加载中...</option>
-            </select>
+            <div class="preview-container">
+                <select id="resourcesSelect" size="10" class="resources-list">
+                    <option value="">加载中...</option>
+                </select>
+                <div class="preview-area">
+                    <img id="resourcePreview" class="resource-preview" style="display: none;">
+                    <div class="preview-placeholder" id="previewPlaceholder">选择文件预览</div>
+                </div>
+            </div>
         </div>
         <div class="form-group">
-            <input type="file" id="fileUpload" accept="image/*">
-            <button id="uploadResource" class="btn-primary">上传文件</button>
+            <input type="text" id="newResourceName" placeholder="新资源名称">
+            <button id="renameResource" class="btn-secondary">重命名选中</button>
             <button id="deleteResource" class="btn-danger">删除选中</button>
+        </div>
+        <div class="form-group">
+            <input type="file" id="fileUpload" accept="image/*" style="display: none;">
+            <button id="uploadResource" class="btn-primary">上传文件</button>
         </div>
         <div class="form-group">
             <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>

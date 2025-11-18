@@ -142,6 +142,17 @@ def register_chat_apis(chat_bot):
         else:
             return {"status": "error", "message": f"删除提示词失败: {data['prompt_name']}"}
     
+    # 重命名提示词
+    def rename_prompt(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = chat_bot.rename_prompt(data['old_name'], data['new_name'])
+        if success:
+            return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名提示词失败"}
+    
     # 获取存档列表
     def get_saves(data):
         saves = chat_bot.get_saved_chats()
@@ -149,6 +160,22 @@ def register_chat_apis(chat_bot):
     
     # 保存聊天
     def save_chat(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        # 检查文件是否已存在
+        saves = chat_bot.get_saved_chats()
+        if data['filename'] in saves:
+            return {"status": "exists", "message": f"存档已存在: {data['filename']}"}
+        
+        success = chat_bot.save_chat(data['filename'])
+        if success:
+            return {"status": "success", "message": f"聊天已保存: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"保存聊天失败: {data['filename']}"}
+    
+    # 强制保存聊天（覆盖）
+    def force_save_chat(data):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
@@ -180,6 +207,17 @@ def register_chat_apis(chat_bot):
         else:
             return {"status": "error", "message": f"删除聊天失败: {data['filename']}"}
     
+    # 重命名聊天
+    def rename_chat(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = chat_bot.rename_chat(data['old_name'], data['new_name'])
+        if success:
+            return {"status": "success", "message": f"聊天已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名聊天失败"}
+    
     # 获取资源文件
     def get_resources(data):
         files = chat_bot.get_resource_files()
@@ -195,6 +233,17 @@ def register_chat_apis(chat_bot):
             return {"status": "success", "message": f"资源文件已删除: {data['filename']}"}
         else:
             return {"status": "error", "message": f"删除资源文件失败: {data['filename']}"}
+    
+    # 重命名资源文件
+    def rename_resource(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = chat_bot.rename_resource(data['old_name'], data['new_name'])
+        if success:
+            return {"status": "success", "message": f"资源文件已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名资源文件失败"}
     
     # 流式聊天（特殊处理）
     def stream_chat(data):
@@ -214,12 +263,16 @@ def register_chat_apis(chat_bot):
     api_registry.register_route('prompt/set', 'POST', set_prompt)
     api_registry.register_route('prompt/save', 'POST', save_prompt)
     api_registry.register_route('prompt/delete', 'POST', delete_prompt)
+    api_registry.register_route('prompt/rename', 'POST', rename_prompt)
     api_registry.register_route('saves', 'GET', get_saves)
     api_registry.register_route('save', 'POST', save_chat)
+    api_registry.register_route('save/force', 'POST', force_save_chat)
     api_registry.register_route('save/load', 'POST', load_chat)
     api_registry.register_route('save/delete', 'POST', delete_chat)
+    api_registry.register_route('save/rename', 'POST', rename_chat)
     api_registry.register_route('resources', 'GET', get_resources)
     api_registry.register_route('resource/delete', 'POST', delete_resource)
+    api_registry.register_route('resource/rename', 'POST', rename_resource)
     api_registry.register_route('chat/stream', 'POST', stream_chat)
     
     # 注册静态文件路由

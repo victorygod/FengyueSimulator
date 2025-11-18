@@ -7,14 +7,6 @@
     {
       "role": "assistant",
       "content": "清晨的阳光透过薄雾，洒在蜿蜒的乡间小路上。路旁的野花沾着露珠，随风轻轻摇曳，远处传来鸟儿的清脆鸣叫。空气中弥漫着泥土与青草的芬芳，宁静而充满生机。"
-    },
-    {
-      "role": "user",
-      "content": "生成30字左右的描写，中间带有one.jpg字符串"
-    },
-    {
-      "role": "assistant",
-      "content": "清晨的薄雾中，one.jpg 映着露珠闪烁，野花在微风中摇曳，鸟儿清脆啼鸣。"
     }
   ],
   "prompt_name": "default"

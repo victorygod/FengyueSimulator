@@ -98,6 +98,22 @@ class ChatBot:
             print(f"删除提示词失败: {str(e)}")
             return False
     
+    def rename_prompt(self, old_name: str, new_name: str) -> bool:
+        """重命名提示词"""
+        try:
+            old_path = os.path.join('prompts', f'{old_name}.json')
+            new_path = os.path.join('prompts', f'{new_name}.json')
+            
+            if os.path.exists(old_path) and not os.path.exists(new_path):
+                os.rename(old_path, new_path)
+                if self.current_prompt == old_name:
+                    self.current_prompt = new_name
+                return True
+            return False
+        except Exception as e:
+            print(f"重命名提示词失败: {str(e)}")
+            return False
+    
     def get_available_prompts(self) -> List[str]:
         """获取所有可用的提示词"""
         try:
@@ -140,9 +156,8 @@ class ChatBot:
     
     def stream_chat(self, user_input: str) -> Generator[str, None, None]:
         """流式聊天"""
-        if not self.api_key or len(self.api_key) == 0:
-            yield "错误：请先设置API密钥"
-            return
+        if not self.api_key:
+            raise Exception("请先设置API密钥")
         
         # 添加用户消息到历史
         self.chat_history.append({
@@ -172,8 +187,7 @@ class ChatBot:
             
             if response.status_code != 200:
                 error_msg = f"API请求失败: {response.status_code} - {response.text}"
-                yield error_msg
-                return
+                raise Exception(error_msg)
             
             assistant_response = ""
             for line in response.iter_lines():
@@ -190,7 +204,7 @@ class ChatBot:
                                 if 'content' in delta:
                                     content = delta['content']
                                     assistant_response += content
-                                    yield content
+                                    yield content  # 直接返回内容，不添加换行
                         except json.JSONDecodeError:
                             continue
             
@@ -209,8 +223,7 @@ class ChatBot:
             self.auto_save()
             
         except Exception as e:
-            error_msg = f"聊天失败: {str(e)}"
-            yield error_msg
+            raise Exception(f"聊天失败: {str(e)}")
     
     def detect_images_in_response(self, response: str) -> List[str]:
         """检测回复中的图片文件名"""
@@ -269,6 +282,20 @@ class ChatBot:
             return False
         except Exception as e:
             print(f"删除聊天记录失败: {str(e)}")
+            return False
+    
+    def rename_chat(self, old_name: str, new_name: str) -> bool:
+        """重命名聊天记录"""
+        try:
+            old_path = os.path.join('save', f'{old_name}.json')
+            new_path = os.path.join('save', f'{new_name}.json')
+            
+            if os.path.exists(old_path) and not os.path.exists(new_path):
+                os.rename(old_path, new_path)
+                return True
+            return False
+        except Exception as e:
+            print(f"重命名聊天记录失败: {str(e)}")
             return False
     
     def get_saved_chats(self) -> List[str]:
@@ -355,4 +382,18 @@ class ChatBot:
             return False
         except Exception as e:
             print(f"删除资源文件失败: {str(e)}")
+            return False
+    
+    def rename_resource(self, old_name: str, new_name: str) -> bool:
+        """重命名资源文件"""
+        try:
+            old_path = os.path.join('resource', old_name)
+            new_path = os.path.join('resource', new_name)
+            
+            if os.path.exists(old_path) and not os.path.exists(new_path):
+                os.rename(old_path, new_path)
+                return True
+            return False
+        except Exception as e:
+            print(f"重命名资源文件失败: {str(e)}")
             return False

@@ -428,3 +428,65 @@ body {
     margin-top: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* 资源预览样式 */
+.preview-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.resources-list {
+    flex: 1;
+    min-height: 200px;
+}
+
+.preview-area {
+    flex: 1;
+    min-height: 200px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+}
+
+.resource-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+}
+
+.preview-placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* 状态指示器 */
+.status-ok {
+    color: #48bb78;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #f56565;
+    font-weight: bold;
+}
+
+/* 表单组布局优化 */
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-group > * {
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group button {
+    flex: 0 1 auto;
+}

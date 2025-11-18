@@ -115,19 +115,16 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
         
         # 流式响应（简化版）
         try:
-            full_response = ""
             for chunk in self.chat_bot.stream_chat(user_message):
                 if chunk:
-                    full_response += chunk
-                    # 发送数据
+                    # 直接发送数据
                     self.wfile.write(chunk.encode('utf-8'))
                     self.wfile.flush()
-                    time.sleep(0.01)  # 少量延迟以模拟流式
-            
+                
         except Exception as e:
             error_msg = f"流式响应错误: {str(e)}"
             self.wfile.write(error_msg.encode('utf-8'))
-    
+        
     def send_json_response(self, data):
         """发送JSON响应"""
         self.send_response(200)

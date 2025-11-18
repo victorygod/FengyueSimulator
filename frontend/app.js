@@ -63,7 +63,7 @@ class ChatApp {
             return { status: 'error', message: '网络请求失败' };
         }
     }
-    
+        
     // 流式聊天
     async streamChat(message) {
         this.isStreaming = true;
@@ -79,11 +79,11 @@ class ChatApp {
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP错误! 状态码: ${response.status}`);
             }
             
             const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            const decoder = new TextDecoder('utf-8');
             this.currentResponse = '';
             
             // 添加助手消息占位符
@@ -96,6 +96,7 @@ class ChatApp {
                     break;
                 }
                 
+                // 直接解码数据，不需要处理chunked encoding
                 const chunk = decoder.decode(value, { stream: true });
                 this.currentResponse += chunk;
                 
@@ -108,7 +109,14 @@ class ChatApp {
             
         } catch (error) {
             console.error('流式聊天错误:', error);
-            this.addMessage('assistant', `错误: ${error.message}`);
+            
+            // 检查是否是API密钥错误
+            if (error.message.includes('API密钥') || error.message.includes('请先设置API密钥')) {
+                alert('错误：请先设置API密钥');
+                this.showApiKeyModal();
+            } else {
+                this.addMessage('assistant', `错误: ${error.message}`);
+            }
         } finally {
             this.isStreaming = false;
             this.updateSendButton();
@@ -229,7 +237,7 @@ class ChatApp {
     
     // 格式化消息内容
     formatMessage(content) {
-        // 简单的格式化处理
+        // 简单的格式化处理，保持原有的换行但不添加额外换行
         return content
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -407,7 +415,12 @@ class ChatApp {
             const select = document.getElementById('promptSelect');
             const promptName = select.value;
             
-            if (!promptName || promptName === 'default') {
+            if (!promptName) {
+                alert('请选择要删除的提示词');
+                return;
+            }
+            
+            if (promptName === 'default') {
                 alert('不能删除默认提示词');
                 return;
             }
@@ -419,6 +432,43 @@ class ChatApp {
                     this.loadPrompts();
                 } else {
                     alert('删除失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 重命名提示词
+        document.getElementById('renamePrompt').addEventListener('click', async () => {
+            const select = document.getElementById('promptSelect');
+            const oldName = select.value;
+            const newName = document.getElementById('newPromptName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的提示词');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的提示词名称');
+                return;
+            }
+            
+            if (oldName === 'default') {
+                alert('不能重命名默认提示词');
+                return;
+            }
+            
+            if (confirm(`确定要将提示词 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('prompt/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: newName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('提示词已重命名');
+                    this.loadPrompts();
+                    document.getElementById('newPromptName').value = '';
+                } else {
+                    alert('重命名失败: ' + result.message);
                 }
             }
         });
@@ -455,10 +505,8 @@ class ChatApp {
     }
     
     updatePromptIndicator() {
-        // 这里可以添加更新提示词指示器的逻辑
         const indicator = document.getElementById('promptIndicator');
         if (indicator) {
-            // 在实际实现中，可以从API获取当前提示词名称
             indicator.textContent = '提示词已加载';
         }
     }
@@ -472,6 +520,14 @@ class ChatApp {
     async setupSavesModal() {
         await this.loadSaves();
         
+        // 存档选择事件 - 自动填充名称
+        document.getElementById('savesSelect').addEventListener('change', (e) => {
+            const saveName = e.target.value;
+            if (saveName) {
+                document.getElementById('newSaveName').value = saveName;
+            }
+        });
+        
         // 保存聊天
         document.getElementById('saveChat').addEventListener('click', async () => {
             const saveName = document.getElementById('newSaveName').value.trim();
@@ -480,11 +536,23 @@ class ChatApp {
                 return;
             }
             
+            // 先尝试保存，如果已存在会返回exists状态
             const result = await this.apiCall('save', 'POST', { filename: saveName });
-            if (result.status === 'success') {
+            
+            if (result.status === 'exists') {
+                // 存档已存在，询问是否覆盖
+                if (confirm(`存档"${saveName}"已存在，是否覆盖？`)) {
+                    const forceResult = await this.apiCall('save/force', 'POST', { filename: saveName });
+                    if (forceResult.status === 'success') {
+                        this.showStatus('聊天已保存（覆盖）');
+                        this.loadSaves();
+                    } else {
+                        alert('保存失败: ' + forceResult.message);
+                    }
+                }
+            } else if (result.status === 'success') {
                 this.showStatus('聊天已保存');
                 this.loadSaves();
-                document.getElementById('newSaveName').value = '';
             } else {
                 alert('保存失败: ' + result.message);
             }
@@ -527,8 +595,41 @@ class ChatApp {
                 if (result.status === 'success') {
                     this.showStatus('存档已删除');
                     this.loadSaves();
+                    document.getElementById('newSaveName').value = '';
                 } else {
                     alert('删除失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 重命名存档
+        document.getElementById('renameSave').addEventListener('click', async () => {
+            const select = document.getElementById('savesSelect');
+            const oldName = select.value;
+            const newName = document.getElementById('newSaveName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的存档');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的存档名称');
+                return;
+            }
+            
+            if (confirm(`确定要将存档 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('save/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: newName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('存档已重命名');
+                    this.loadSaves();
+                    document.getElementById('newSaveName').value = '';
+                } else {
+                    alert('重命名失败: ' + result.message);
                 }
             }
         });
@@ -558,6 +659,19 @@ class ChatApp {
     async setupResourcesModal() {
         await this.loadResources();
         
+        // 资源选择事件 - 显示预览
+        document.getElementById('resourcesSelect').addEventListener('change', (e) => {
+            const filename = e.target.value;
+            const preview = document.getElementById('resourcePreview');
+            
+            if (filename && this.isImageFile(filename)) {
+                preview.src = `/resource/${filename}`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
         // 上传文件
         document.getElementById('uploadResource').addEventListener('click', () => {
             document.getElementById('fileUpload').click();
@@ -568,7 +682,6 @@ class ChatApp {
             if (!file) return;
             
             // 这里需要实现文件上传逻辑
-            // 注意：由于浏览器安全限制，文件上传需要特殊处理
             alert('文件上传功能需要在服务器端实现特殊处理');
         });
         
@@ -587,11 +700,49 @@ class ChatApp {
                 if (result.status === 'success') {
                     this.showStatus('资源文件已删除');
                     this.loadResources();
+                    document.getElementById('resourcePreview').style.display = 'none';
                 } else {
                     alert('删除失败: ' + result.message);
                 }
             }
         });
+        
+        // 重命名资源
+        document.getElementById('renameResource').addEventListener('click', async () => {
+            const select = document.getElementById('resourcesSelect');
+            const oldName = select.value;
+            const newName = document.getElementById('newResourceName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的资源文件');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的资源文件名称');
+                return;
+            }
+            
+            if (confirm(`确定要将资源文件 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('resource/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: newName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('资源文件已重命名');
+                    this.loadResources();
+                    document.getElementById('newResourceName').value = '';
+                    document.getElementById('resourcePreview').style.display = 'none';
+                } else {
+                    alert('重命名失败: ' + result.message);
+                }
+            }
+        });
+    }
+    
+    isImageFile(filename) {
+        return filename.toLowerCase().match(/\.(jpg|jpeg|png|gif|bmp)$/);
     }
     
     async loadResources() {
