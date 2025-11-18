@@ -329,6 +329,14 @@ api_key一开始为空，在界面上添加按钮让我能够查看并修改api_
 resource目录下的文件名需要支持中文文件名
 对话框布局需要优化一下，图片预览窗口位置太小了，而左侧有大量空白，请合理安排布局。
 
+提示词管理页面需要添加保存修改按钮，把另存为按钮改为保存按钮，默认保存修改到当前文件。新增新建文件按钮，新提示词文件内容为当前展示的内容。
+StorageManager.load_prompt里面else部分改成这样：
+else:
+    logger.error(f"无法加载提示词文件: {str(prompt_path)}")
+    return {}
+ChatBot初始化时，self.current_prompt = "default"，后来self.load_config()也没更新这个self.current_prompt，导致找不到提示词文件。然后后面也没有地方能够更新它。应该在StorageManager.load_prompt时就立刻更新ChatBot.current_prompt，我觉得ChatBot.load_prompt里面直接更新一下self.current_prompt大概就能解决问题。
+
+
 完整输出每个文件的内容。
 所有交互和通信都需要支持中文。
 在android上运行前，用Buildozer打包成apk

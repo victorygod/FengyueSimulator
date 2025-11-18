@@ -6,7 +6,7 @@
 import os
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 import json
 import threading
 
@@ -36,21 +36,26 @@ class WebChatHandler(SimpleHTTPRequestHandler):
         if parsed_path.path == '/':
             self.path = '/index.html'
         
-        # 处理资源文件
+        # 处理资源文件 - 修复中文文件名问题
         if parsed_path.path.startswith('/resource/'):
-            resource_path = parsed_path.path[1:]  # 去掉开头的/
+            # 对URL进行解码以处理中文文件名
+            decoded_path = unquote(parsed_path.path)
+            resource_path = decoded_path[1:]  # 去掉开头的/
+            
             if os.path.exists(resource_path):
                 self.serve_file(resource_path)
                 return
             else:
-                self.send_error(404, "资源文件不存在")
+                # 使用英文错误信息避免编码问题
+                self.send_error(404, "Resource file not found")
                 return
         
         # 默认静态文件服务
         try:
             return super().do_GET()
         except Exception as e:
-            self.send_error(404, f"文件不存在: {str(e)}")
+            # 使用英文错误信息
+            self.send_error(404, f"File not found: {str(e)}")
     
     def do_POST(self):
         """处理POST请求"""
@@ -59,7 +64,8 @@ class WebChatHandler(SimpleHTTPRequestHandler):
         if parsed_path.path.startswith('/api/'):
             self.handle_api_request(parsed_path.path, 'POST')
         else:
-            self.send_error(404, "接口不存在")
+            # 使用英文错误信息
+            self.send_error(404, "API not found")
     
     def handle_api_request(self, path: str, method: str):
         """处理API请求"""
@@ -98,14 +104,15 @@ class WebChatHandler(SimpleHTTPRequestHandler):
             self.send_json_response(response)
             
         except Exception as e:
-            self.send_error(500, f"服务器错误: {str(e)}")
+            # 使用英文错误信息
+            self.send_error(500, f"Server error: {str(e)}")
     
     def handle_stream_chat(self, data):
         """处理流式聊天请求"""
         from chat_core import ChatBot
         
         if not data or 'message' not in data:
-            self.send_json_response({"status": "error", "message": "缺少消息内容"})
+            self.send_json_response({"status": "error", "message": "Missing message content"})
             return
         
         user_message = data['message']
@@ -124,7 +131,7 @@ class WebChatHandler(SimpleHTTPRequestHandler):
                 break
         
         if not chat_bot:
-            self.send_json_response({"status": "error", "message": "聊天机器人未初始化"})
+            self.send_json_response({"status": "error", "message": "Chat bot not initialized"})
             return
         
         # 设置流式响应头 - 使用普通文本而不是chunked encoding
@@ -143,7 +150,7 @@ class WebChatHandler(SimpleHTTPRequestHandler):
                     
         except Exception as e:
             # 发送错误信息
-            error_msg = f"流式响应错误: {str(e)}"
+            error_msg = f"Stream response error: {str(e)}"
             self.wfile.write(error_msg.encode('utf-8'))
     
     def send_json_response(self, data):
@@ -179,7 +186,36 @@ class WebChatHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
         except Exception as e:
-            self.send_error(404, f"文件读取失败: {str(e)}")
+            # 使用英文错误信息
+            self.send_error(404, f"File read error: {str(e)}")
+    
+    # 重写错误处理方法以支持UTF-8
+    def send_error(self, code, message=None):
+        """发送错误响应，支持UTF-8编码"""
+        try:
+            # 使用UTF-8编码消息
+            if message is None:
+                message = self.responses[code][0]
+            
+            # 构建错误页面
+            content = self.error_message_format % {
+                'code': code,
+                'message': message
+            }
+            
+            # 发送响应
+            self.send_response(code)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header('Content-Length', str(len(content.encode('utf-8'))))
+            self.end_headers()
+            
+            # 写入内容
+            if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+                self.wfile.write(content.encode('utf-8'))
+                
+        except Exception as e:
+            # 如果出错，回退到父类方法
+            super().send_error(code, "Error")
 
 
 class WebPlatform:

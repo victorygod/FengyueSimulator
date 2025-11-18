@@ -87,9 +87,12 @@
         </div>
         <div class="form-group">
             <input type="text" id="newPromptName" placeholder="新提示词名称">
-            <button id="savePromptAs" class="btn-primary">另存为</button>
-            <button id="renamePrompt" class="btn-secondary">重命名当前</button>
-            <button id="deletePrompt" class="btn-danger">删除当前</button>
+            <div class="button-group">
+                <button id="savePrompt" class="btn-primary">保存修改</button>
+                <button id="newPrompt" class="btn-secondary">新建文件</button>
+                <button id="renamePrompt" class="btn-secondary">重命名当前</button>
+                <button id="deletePrompt" class="btn-danger">删除当前</button>
+            </div>
         </div>
     </template>
 
@@ -112,29 +115,41 @@
 
     <!-- 资源管理模态框内容 -->
     <template id="resourcesTemplate">
-        <div class="form-group">
-            <label>资源文件:</label>
-            <div class="preview-container">
-                <select id="resourcesSelect" size="10" class="resources-list">
-                    <option value="">加载中...</option>
-                </select>
-                <div class="preview-area">
-                    <img id="resourcePreview" class="resource-preview" style="display: none;">
-                    <div class="preview-placeholder" id="previewPlaceholder">选择文件预览</div>
+        <div class="resources-container">
+            <div class="resources-main">
+                <div class="resources-list-section">
+                    <label>资源文件列表:</label>
+                    <select id="resourcesSelect" size="12" class="resources-list">
+                        <option value="">加载中...</option>
+                    </select>
+                    <div class="resources-actions">
+                        <input type="text" id="newResourceName" placeholder="新资源名称" class="resource-input">
+                        <div class="action-buttons">
+                            <button id="renameResource" class="btn-secondary">重命名</button>
+                            <button id="deleteResource" class="btn-danger">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-section">
+                    <label>图片预览:</label>
+                    <div class="preview-area">
+                        <img id="resourcePreview" class="resource-preview" style="display: none;">
+                        <div class="preview-placeholder" id="previewPlaceholder">
+                            <span>选择文件预览</span>
+                            <p>支持的格式: JPG, PNG, GIF, BMP</p>
+                        </div>
+                    </div>
+                    <div class="upload-section">
+                        <input type="file" id="fileUpload" accept="image/*" style="display: none;">
+                        <button id="uploadResource" class="btn-primary">上传新文件</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="form-group">
-            <input type="text" id="newResourceName" placeholder="新资源名称">
-            <button id="renameResource" class="btn-secondary">重命名选中</button>
-            <button id="deleteResource" class="btn-danger">删除选中</button>
-        </div>
-        <div class="form-group">
-            <input type="file" id="fileUpload" accept="image/*" style="display: none;">
-            <button id="uploadResource" class="btn-primary">上传文件</button>
-        </div>
-        <div class="form-group">
-            <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>
+            
+            <div class="resources-footer">
+                <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>
+            </div>
         </div>
     </template>
 

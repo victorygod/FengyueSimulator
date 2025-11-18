@@ -7,6 +7,9 @@ import os
 import json
 from typing import Dict, Any, Callable, Optional, Tuple
 
+# 导入存储管理器
+from storage_manager import storage_manager
+
 
 class APIRegistry:
     """API注册中心"""
@@ -125,7 +128,7 @@ def register_chat_apis(chat_bot):
         if not data or 'prompt_name' not in data or 'prompt_data' not in data:
             return {"status": "error", "message": "缺少提示词数据"}
         
-        success = chat_bot.save_prompt(data['prompt_name'], data['prompt_data'])
+        success = storage_manager.save_prompt(data['prompt_name'], data['prompt_data'])
         if success:
             return {"status": "success", "message": f"提示词已保存: {data['prompt_name']}"}
         else:
@@ -136,7 +139,7 @@ def register_chat_apis(chat_bot):
         if not data or 'prompt_name' not in data:
             return {"status": "error", "message": "缺少提示词名称"}
         
-        success = chat_bot.delete_prompt(data['prompt_name'])
+        success = storage_manager.delete_prompt(data['prompt_name'])
         if success:
             return {"status": "success", "message": f"提示词已删除: {data['prompt_name']}"}
         else:
@@ -147,7 +150,7 @@ def register_chat_apis(chat_bot):
         if not data or 'old_name' not in data or 'new_name' not in data:
             return {"status": "error", "message": "缺少重命名参数"}
         
-        success = chat_bot.rename_prompt(data['old_name'], data['new_name'])
+        success = storage_manager.rename_prompt(data['old_name'], data['new_name'])
         if success:
             return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
@@ -155,7 +158,7 @@ def register_chat_apis(chat_bot):
     
     # 获取存档列表
     def get_saves(data):
-        saves = chat_bot.get_saved_chats()
+        saves = storage_manager.get_saved_chats()
         return {"status": "success", "saves": saves}
     
     # 保存聊天
@@ -164,11 +167,16 @@ def register_chat_apis(chat_bot):
             return {"status": "error", "message": "缺少文件名"}
         
         # 检查文件是否已存在
-        saves = chat_bot.get_saved_chats()
+        saves = storage_manager.get_saved_chats()
         if data['filename'] in saves:
             return {"status": "exists", "message": f"存档已存在: {data['filename']}"}
         
-        success = chat_bot.save_chat(data['filename'])
+        chat_data = {
+            "chat_history": chat_bot.chat_history,
+            "prompt_name": chat_bot.current_prompt
+        }
+        
+        success = storage_manager.save_chat(data['filename'], chat_data)
         if success:
             return {"status": "success", "message": f"聊天已保存: {data['filename']}"}
         else:
@@ -179,7 +187,12 @@ def register_chat_apis(chat_bot):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        success = chat_bot.save_chat(data['filename'])
+        chat_data = {
+            "chat_history": chat_bot.chat_history,
+            "prompt_name": chat_bot.current_prompt
+        }
+        
+        success = storage_manager.save_chat(data['filename'], chat_data)
         if success:
             return {"status": "success", "message": f"聊天已保存: {data['filename']}"}
         else:
@@ -190,8 +203,10 @@ def register_chat_apis(chat_bot):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        success = chat_bot.load_chat(data['filename'])
-        if success:
+        chat_data = storage_manager.load_chat(data['filename'])
+        if chat_data:
+            chat_bot.chat_history = chat_data.get('chat_history', [])
+            chat_bot.load_prompt(chat_data.get('prompt_name', 'default'))
             return {"status": "success", "message": f"聊天已加载: {data['filename']}"}
         else:
             return {"status": "error", "message": f"加载聊天失败: {data['filename']}"}
@@ -201,7 +216,7 @@ def register_chat_apis(chat_bot):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        success = chat_bot.delete_chat(data['filename'])
+        success = storage_manager.delete_chat(data['filename'])
         if success:
             return {"status": "success", "message": f"聊天已删除: {data['filename']}"}
         else:
@@ -212,7 +227,7 @@ def register_chat_apis(chat_bot):
         if not data or 'old_name' not in data or 'new_name' not in data:
             return {"status": "error", "message": "缺少重命名参数"}
         
-        success = chat_bot.rename_chat(data['old_name'], data['new_name'])
+        success = storage_manager.rename_chat(data['old_name'], data['new_name'])
         if success:
             return {"status": "success", "message": f"聊天已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
@@ -220,7 +235,7 @@ def register_chat_apis(chat_bot):
     
     # 获取资源文件
     def get_resources(data):
-        files = chat_bot.get_resource_files()
+        files = storage_manager.get_resource_files()
         return {"status": "success", "files": files}
     
     # 删除资源文件
@@ -228,7 +243,7 @@ def register_chat_apis(chat_bot):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        success = chat_bot.delete_resource(data['filename'])
+        success = storage_manager.delete_resource(data['filename'])
         if success:
             return {"status": "success", "message": f"资源文件已删除: {data['filename']}"}
         else:
@@ -239,7 +254,7 @@ def register_chat_apis(chat_bot):
         if not data or 'old_name' not in data or 'new_name' not in data:
             return {"status": "error", "message": "缺少重命名参数"}
         
-        success = chat_bot.rename_resource(data['old_name'], data['new_name'])
+        success = storage_manager.rename_resource(data['old_name'], data['new_name'])
         if success:
             return {"status": "success", "message": f"资源文件已重命名: {data['old_name']} -> {data['new_name']}"}
         else:

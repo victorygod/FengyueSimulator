@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 核心聊天逻辑
-处理与DeepSeek API的交互和聊天历史管理
+只处理与DeepSeek API的交互和聊天历史管理
 """
 import json
 import os
@@ -9,123 +9,48 @@ import requests
 import re
 from typing import List, Dict, Any, Generator
 
+# 导入存储管理器
+from storage_manager import storage_manager
+
 
 class ChatBot:
     """聊天机器人核心类"""
     
     def __init__(self):
         self.chat_history = []
-        self.current_prompt = "default"
+        self.current_prompt = "default_prompt"
         self.api_key = ""
         self.base_url = "https://api.deepseek.com/v1/chat/completions"
         
-        # 加载配置
+        # 加载配置和提示词
         self.load_config()
         self.load_prompt(self.current_prompt)
     
     def load_config(self):
         """加载API密钥配置"""
-        config_path = os.path.join('config', 'api_key.json')
-        try:
-            if os.path.exists(config_path):
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    self.api_key = config.get('api_key', '')
-        except Exception as e:
-            print(f"加载配置失败: {str(e)}")
+        config = storage_manager.load_config()
+        self.api_key = config.get('api_key', '')
     
     def save_config(self):
         """保存API密钥配置"""
-        config_path = os.path.join('config', 'api_key.json')
-        try:
-            os.makedirs('config', exist_ok=True)
-            with open(config_path, 'w', encoding='utf-8') as f:
-                json.dump({'api_key': self.api_key}, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"保存配置失败: {str(e)}")
+        storage_manager.save_config({'api_key': self.api_key})
     
     def load_prompt(self, prompt_name: str) -> bool:
         """加载提示词配置"""
-        prompt_path = os.path.join('prompts', f'{prompt_name}.json')
         try:
-            if os.path.exists(prompt_path):
-                with open(prompt_path, 'r', encoding='utf-8') as f:
-                    self.prompt_config = json.load(f)
+            prompt_config = storage_manager.load_prompt(prompt_name)
+            if prompt_config:
+                self.prompt_config = prompt_config
                 self.current_prompt = prompt_name
                 return True
-            else:
-                # 加载默认提示词
-                default_path = os.path.join('prompts', 'default_prompt.json')
-                if os.path.exists(default_path):
-                    with open(default_path, 'r', encoding='utf-8') as f:
-                        self.prompt_config = json.load(f)
-                else:
-                    # 创建默认提示词
-                    self.prompt_config = {
-                        "pre_prompt": "你是一个有帮助的AI助手。",
-                        "pre_text": "用户：",
-                        "post_text": ""
-                    }
-                self.current_prompt = "default"
-                return False
+            return False
         except Exception as e:
             print(f"加载提示词失败: {str(e)}")
             return False
     
-    def save_prompt(self, prompt_name: str, prompt_data: Dict[str, str]) -> bool:
-        """保存提示词配置"""
-        try:
-            os.makedirs('prompts', exist_ok=True)
-            prompt_path = os.path.join('prompts', f'{prompt_name}.json')
-            with open(prompt_path, 'w', encoding='utf-8') as f:
-                json.dump(prompt_data, f, ensure_ascii=False, indent=2)
-            return True
-        except Exception as e:
-            print(f"保存提示词失败: {str(e)}")
-            return False
-    
-    def delete_prompt(self, prompt_name: str) -> bool:
-        """删除提示词配置"""
-        try:
-            prompt_path = os.path.join('prompts', f'{prompt_name}.json')
-            if os.path.exists(prompt_path):
-                os.remove(prompt_path)
-                if self.current_prompt == prompt_name:
-                    self.load_prompt("default")
-                return True
-            return False
-        except Exception as e:
-            print(f"删除提示词失败: {str(e)}")
-            return False
-    
-    def rename_prompt(self, old_name: str, new_name: str) -> bool:
-        """重命名提示词"""
-        try:
-            old_path = os.path.join('prompts', f'{old_name}.json')
-            new_path = os.path.join('prompts', f'{new_name}.json')
-            
-            if os.path.exists(old_path) and not os.path.exists(new_path):
-                os.rename(old_path, new_path)
-                if self.current_prompt == old_name:
-                    self.current_prompt = new_name
-                return True
-            return False
-        except Exception as e:
-            print(f"重命名提示词失败: {str(e)}")
-            return False
-    
     def get_available_prompts(self) -> List[str]:
         """获取所有可用的提示词"""
-        try:
-            prompts = []
-            if os.path.exists('prompts'):
-                for file in os.listdir('prompts'):
-                    if file.endswith('.json'):
-                        prompts.append(file[:-5])  # 去掉.json后缀
-            return prompts
-        except Exception as e:
-            print(f"获取提示词列表失败: {str(e)}")
-            return []
+        return storage_manager.get_available_prompts()
     
     def build_messages(self, user_input: str) -> List[Dict[str, str]]:
         """构建消息列表"""
@@ -164,7 +89,7 @@ class ChatBot:
             "role": "user",
             "content": user_input
         })
-        
+
         try:
             headers = {
                 "Content-Type": "application/json",
@@ -177,6 +102,8 @@ class ChatBot:
                 "stream": True
             }
             
+            print(data)
+
             response = requests.post(
                 self.base_url,
                 headers=headers,
@@ -228,172 +155,32 @@ class ChatBot:
     def detect_images_in_response(self, response: str) -> List[str]:
         """检测回复中的图片文件名"""
         image_files = []
-        resource_dir = 'resource'
+        resource_files = storage_manager.get_resource_files()
         
-        if os.path.exists(resource_dir):
-            for file in os.listdir(resource_dir):
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                    if file in response:
-                        image_files.append(file)
+        for file in resource_files:
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                if file in response:
+                    image_files.append(file)
         
         return image_files
     
-    def save_chat(self, filename: str) -> bool:
-        """保存聊天记录"""
-        try:
-            os.makedirs('save', exist_ok=True)
-            save_path = os.path.join('save', f'{filename}.json')
-            
-            save_data = {
-                "chat_history": self.chat_history,
-                "prompt_name": self.current_prompt
-            }
-            
-            with open(save_path, 'w', encoding='utf-8') as f:
-                json.dump(save_data, f, ensure_ascii=False, indent=2)
-            return True
-        except Exception as e:
-            print(f"保存聊天记录失败: {str(e)}")
-            return False
-    
-    def load_chat(self, filename: str) -> bool:
-        """加载聊天记录"""
-        try:
-            save_path = os.path.join('save', f'{filename}.json')
-            if os.path.exists(save_path):
-                with open(save_path, 'r', encoding='utf-8') as f:
-                    save_data = json.load(f)
-                
-                self.chat_history = save_data.get('chat_history', [])
-                self.load_prompt(save_data.get('prompt_name', 'default'))
-                return True
-            return False
-        except Exception as e:
-            print(f"加载聊天记录失败: {str(e)}")
-            return False
-    
-    def delete_chat(self, filename: str) -> bool:
-        """删除聊天记录"""
-        try:
-            save_path = os.path.join('save', f'{filename}.json')
-            if os.path.exists(save_path):
-                os.remove(save_path)
-                return True
-            return False
-        except Exception as e:
-            print(f"删除聊天记录失败: {str(e)}")
-            return False
-    
-    def rename_chat(self, old_name: str, new_name: str) -> bool:
-        """重命名聊天记录"""
-        try:
-            old_path = os.path.join('save', f'{old_name}.json')
-            new_path = os.path.join('save', f'{new_name}.json')
-            
-            if os.path.exists(old_path) and not os.path.exists(new_path):
-                os.rename(old_path, new_path)
-                return True
-            return False
-        except Exception as e:
-            print(f"重命名聊天记录失败: {str(e)}")
-            return False
-    
-    def get_saved_chats(self) -> List[str]:
-        """获取所有保存的聊天记录"""
-        try:
-            chats = []
-            if os.path.exists('save'):
-                for file in os.listdir('save'):
-                    if file.endswith('.json'):
-                        chats.append(file[:-5])  # 去掉.json后缀
-            return sorted(chats)
-        except Exception as e:
-            print(f"获取聊天记录列表失败: {str(e)}")
-            return []
-    
     def auto_save(self):
-        """自动保存，保留最近5次存档"""
-        try:
-            # 删除最旧的存档
-            old_save = os.path.join('save', 'autosave_5.json')
-            if os.path.exists(old_save):
-                os.remove(old_save)
-            
-            # 重命名现有存档
-            for i in range(4, 0, -1):
-                old_name = os.path.join('save', f'autosave_{i}.json')
-                new_name = os.path.join('save', f'autosave_{i+1}.json')
-                if os.path.exists(old_name):
-                    os.rename(old_name, new_name)
-            
-            # 重命名当前autosave
-            current_autosave = os.path.join('save', 'autosave.json')
-            if os.path.exists(current_autosave):
-                os.rename(current_autosave, os.path.join('save', 'autosave_1.json'))
-            
-            # 创建新的autosave
-            self.save_chat('autosave')
-            
-        except Exception as e:
-            print(f"自动保存失败: {str(e)}")
+        """自动保存聊天记录"""
+        chat_data = {
+            "chat_history": self.chat_history,
+            "prompt_name": self.current_prompt
+        }
+        storage_manager.auto_save(chat_data)
     
     def load_auto_save(self):
         """加载自动保存"""
-        autosave_path = os.path.join('save', 'autosave.json')
-        if os.path.exists(autosave_path):
-            return self.load_chat('autosave')
+        chat_data = storage_manager.load_auto_save()
+        if chat_data:
+            self.chat_history = chat_data.get('chat_history', [])
+            self.load_prompt(chat_data.get('prompt_name', 'default_prompt'))
+            return True
         return False
     
     def clear_chat(self):
         """清空聊天记录"""
         self.chat_history = []
-    
-    def get_resource_files(self) -> List[str]:
-        """获取资源文件列表"""
-        try:
-            files = []
-            if os.path.exists('resource'):
-                for file in os.listdir('resource'):
-                    files.append(file)
-            return sorted(files)
-        except Exception as e:
-            print(f"获取资源文件失败: {str(e)}")
-            return []
-    
-    def copy_to_resource(self, source_path: str, filename: str) -> bool:
-        """复制文件到资源目录"""
-        try:
-            import shutil
-            os.makedirs('resource', exist_ok=True)
-            dest_path = os.path.join('resource', filename)
-            shutil.copy2(source_path, dest_path)
-            return True
-        except Exception as e:
-            print(f"复制文件失败: {str(e)}")
-            return False
-    
-    def delete_resource(self, filename: str) -> bool:
-        """删除资源文件"""
-        try:
-            file_path = os.path.join('resource', filename)
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                return True
-            return False
-        except Exception as e:
-            print(f"删除资源文件失败: {str(e)}")
-            return False
-    
-    def rename_resource(self, old_name: str, new_name: str) -> bool:
-        """重命名资源文件"""
-        try:
-            old_path = os.path.join('resource', old_name)
-            new_path = os.path.join('resource', new_name)
-            
-            if os.path.exists(old_path) and not os.path.exists(new_path):
-                os.rename(old_path, new_path)
-                return True
-            return False
-        except Exception as e:
-            print(f"重命名资源文件失败: {str(e)}")
-            return False

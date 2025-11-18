@@ -358,12 +358,12 @@ class ChatApp {
         }
     }
     
-    // 提示词管理
+    // // 提示词管理
     async showPromptsModal() {
         this.showModal('提示词管理', 'promptsTemplate');
         await this.loadPrompts();
     }
-    
+
     async setupPromptsModal() {
         await this.loadPrompts();
         
@@ -382,11 +382,40 @@ class ChatApp {
             }
         });
         
-        // 保存提示词
-        document.getElementById('savePromptAs').addEventListener('click', async () => {
+        // 保存修改到当前文件
+        document.getElementById('savePrompt').addEventListener('click', async () => {
+            const select = document.getElementById('promptSelect');
+            const currentPrompt = select.value;
+            
+            if (!currentPrompt) {
+                alert('请先选择或创建一个提示词');
+                return;
+            }
+            
+            const promptData = {
+                pre_prompt: document.getElementById('prePrompt').value,
+                pre_text: document.getElementById('preText').value,
+                post_text: document.getElementById('postText').value
+            };
+            
+            const result = await this.apiCall('prompt/save', 'POST', {
+                prompt_name: currentPrompt,
+                prompt_data: promptData
+            });
+            
+            if (result.status === 'success') {
+                this.showStatus('提示词已保存');
+                this.loadPrompts();
+            } else {
+                alert('保存失败: ' + result.message);
+            }
+        });
+        
+        // 新建提示词文件
+        document.getElementById('newPrompt').addEventListener('click', async () => {
             const newName = document.getElementById('newPromptName').value.trim();
             if (!newName) {
-                alert('请输入提示词名称');
+                alert('请输入新提示词名称');
                 return;
             }
             
@@ -402,11 +431,17 @@ class ChatApp {
             });
             
             if (result.status === 'success') {
-                this.showStatus('提示词已保存');
+                this.showStatus('新提示词已创建');
                 this.loadPrompts();
                 document.getElementById('newPromptName').value = '';
+                
+                // 自动切换到新创建的提示词
+                const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: newName });
+                if (switchResult.status === 'success') {
+                    this.updatePromptIndicator();
+                }
             } else {
-                alert('保存失败: ' + result.message);
+                alert('创建失败: ' + result.message);
             }
         });
         
@@ -420,7 +455,7 @@ class ChatApp {
                 return;
             }
             
-            if (promptName === 'default') {
+            if (promptName === 'default_prompt') {
                 alert('不能删除默认提示词');
                 return;
             }
@@ -452,7 +487,7 @@ class ChatApp {
                 return;
             }
             
-            if (oldName === 'default') {
+            if (oldName === 'default_prompt') {
                 alert('不能重命名默认提示词');
                 return;
             }

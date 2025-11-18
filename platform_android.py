@@ -8,6 +8,7 @@ import json
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 import time
+from urllib.parse import unquote
 
 # 导入API注册中心
 from api_registry import api_registry
@@ -34,9 +35,12 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
         if parsed_path == '/':
             self.path = '/index.html'
         
-        # 处理资源文件
+        # 处理资源文件 - 修复中文文件名问题
         if parsed_path.startswith('/resource/'):
-            resource_path = parsed_path[1:]  # 去掉开头的/
+            # 对URL进行解码以处理中文文件名
+            decoded_path = unquote(parsed_path)
+            resource_path = decoded_path[1:]  # 去掉开头的/
+            
             if os.path.exists(resource_path):
                 self.serve_file(resource_path)
                 return
@@ -45,7 +49,7 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
         try:
             return super().do_GET()
         except:
-            self.send_error(404, "文件不存在")
+            self.send_error(404, "File not found")
     
     def do_POST(self):
         """处理POST请求"""
@@ -54,7 +58,7 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
         if parsed_path.startswith('/api/'):
             self.handle_api_request(parsed_path, 'POST')
         else:
-            self.send_error(404, "接口不存在")
+            self.send_error(404, "API not found")
     
     def handle_api_request(self, path: str, method: str):
         """处理API请求"""
@@ -93,18 +97,18 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
             self.send_json_response(response)
             
         except Exception as e:
-            self.send_error(500, f"服务器错误: {str(e)}")
+            self.send_error(500, f"Server error: {str(e)}")
     
     def handle_stream_chat(self, data):
         """处理流式聊天请求"""
         if not data or 'message' not in data:
-            self.send_json_response({"status": "error", "message": "缺少消息内容"})
+            self.send_json_response({"status": "error", "message": "Missing message content"})
             return
         
         user_message = data['message']
         
         if not self.chat_bot:
-            self.send_json_response({"status": "error", "message": "聊天机器人未初始化"})
+            self.send_json_response({"status": "error", "message": "Chat bot not initialized"})
             return
         
         # 设置流式响应头
@@ -120,11 +124,12 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
                     # 直接发送数据
                     self.wfile.write(chunk.encode('utf-8'))
                     self.wfile.flush()
-                
+                    time.sleep(0.01)  # 少量延迟以模拟流式
+            
         except Exception as e:
-            error_msg = f"流式响应错误: {str(e)}"
+            error_msg = f"Stream response error: {str(e)}"
             self.wfile.write(error_msg.encode('utf-8'))
-        
+    
     def send_json_response(self, data):
         """发送JSON响应"""
         self.send_response(200)
@@ -158,7 +163,30 @@ class AndroidHttpHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
         except Exception as e:
-            self.send_error(404, f"文件读取失败: {str(e)}")
+            self.send_error(404, f"File read error: {str(e)}")
+    
+    # 重写错误处理方法
+    def send_error(self, code, message=None):
+        """发送错误响应"""
+        try:
+            if message is None:
+                message = self.responses[code][0]
+            
+            content = self.error_message_format % {
+                'code': code,
+                'message': message
+            }
+            
+            self.send_response(code)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header('Content-Length', str(len(content.encode('utf-8'))))
+            self.end_headers()
+            
+            if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+                self.wfile.write(content.encode('utf-8'))
+                
+        except Exception as e:
+            super().send_error(code, "Error")
 
 
 class AndroidPlatform:
