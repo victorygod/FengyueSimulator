@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增强版聊天机器人</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>增强版聊天机器人</h1>
+            <div class="controls">
+                <button id="apiKeyBtn">API密钥</button>
+                <button id="promptsBtn">提示词</button>
+                <button id="savesBtn">存档</button>
+                <button id="resourcesBtn">资源</button>
+                <button id="clearChatBtn">清空聊天</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="chat-container">
+                <div id="chatHistory" class="chat-history"></div>
+                
+                <div class="input-area">
+                    <div class="input-row">
+                        <input type="text" id="messageInput" placeholder="输入您的消息..." autocomplete="off">
+                        <button id="sendBtn">发送</button>
+                    </div>
+                    <div class="status-row">
+                        <span id="statusText">就绪</span>
+                        <span id="promptIndicator">默认提示词</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">模态框标题</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API密钥管理模态框内容 -->
+    <template id="apiKeyTemplate">
+        <div class="form-group">
+            <label for="apiKeyInput">DeepSeek API密钥:</label>
+            <input type="password" id="apiKeyInput" placeholder="输入您的API密钥">
+        </div>
+        <div class="form-group">
+            <button id="saveApiKey" class="btn-primary">保存密钥</button>
+            <button id="toggleApiKeyVisibility" class="btn-secondary">显示/隐藏</button>
+        </div>
+        <div class="status-info">
+            <p>状态: <span id="apiKeyStatus">未设置</span></p>
+        </div>
+    </template>
+
+    <!-- 提示词管理模态框内容 -->
+    <template id="promptsTemplate">
+        <div class="form-group">
+            <label>当前提示词:</label>
+            <select id="promptSelect">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="prePrompt">系统提示词:</label>
+            <textarea id="prePrompt" placeholder="输入系统提示词..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="preText">用户输入前缀:</label>
+            <input type="text" id="preText" placeholder="用户输入前缀">
+        </div>
+        <div class="form-group">
+            <label for="postText">用户输入后缀:</label>
+            <input type="text" id="postText" placeholder="用户输入后缀">
+        </div>
+        <div class="form-group">
+            <input type="text" id="newPromptName" placeholder="新提示词名称">
+            <button id="savePromptAs" class="btn-primary">另存为</button>
+            <button id="deletePrompt" class="btn-danger">删除当前</button>
+        </div>
+    </template>
+
+    <!-- 存档管理模态框内容 -->
+    <template id="savesTemplate">
+        <div class="form-group">
+            <label>存档列表:</label>
+            <select id="savesSelect" size="10">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="text" id="newSaveName" placeholder="新存档名称">
+            <button id="saveChat" class="btn-primary">保存聊天</button>
+            <button id="loadChat" class="btn-secondary">加载选中</button>
+            <button id="deleteSave" class="btn-danger">删除选中</button>
+        </div>
+    </template>
+
+    <!-- 资源管理模态框内容 -->
+    <template id="resourcesTemplate">
+        <div class="form-group">
+            <label>资源文件:</label>
+            <select id="resourcesSelect" size="10">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="file" id="fileUpload" accept="image/*">
+            <button id="uploadResource" class="btn-primary">上传文件</button>
+            <button id="deleteResource" class="btn-danger">删除选中</button>
+        </div>
+        <div class="form-group">
+            <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>
