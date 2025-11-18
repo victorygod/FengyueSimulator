@@ -18,16 +18,15 @@ class ChatBot:
     
     def __init__(self):
         self.chat_history = []
-        self.current_prompt = "default_prompt.json"  # 改为带后缀的文件名
+        self.current_prompt = "default_prompt.json"  # 默认提示词文件
         self.api_key = ""
         self.base_url = "https://api.deepseek.com/v1/chat/completions"
         self.memory_rounds = 6  # 默认记忆轮数
         self.prompt_name = "默认提示词"  # 存储提示词的name字段
         
-        # 加载配置、用户偏好和提示词
+        # 加载配置和自动保存
         self.load_config()
-        self.load_user_preferences()
-        self.load_prompt(self.current_prompt)
+        self.load_auto_save()
     
     def load_config(self):
         """加载API密钥配置"""
@@ -38,20 +37,6 @@ class ChatBot:
         """保存API密钥配置"""
         storage_manager.save_config({'api_key': self.api_key})
     
-    def load_user_preferences(self):
-        """加载用户偏好设置"""
-        preferences = storage_manager.load_user_preferences()
-        self.current_prompt = preferences.get('current_prompt', 'default_prompt.json')
-        self.memory_rounds = preferences.get('memory_rounds', 6)
-    
-    def save_user_preferences(self):
-        """保存用户偏好设置"""
-        preferences = {
-            'current_prompt': self.current_prompt,
-            'memory_rounds': self.memory_rounds
-        }
-        storage_manager.save_user_preferences(preferences)
-    
     def load_prompt(self, prompt_name: str) -> bool:
         """加载提示词配置"""
         try:
@@ -61,8 +46,6 @@ class ChatBot:
                 self.current_prompt = prompt_name
                 # 更新提示词名称
                 self.prompt_name = prompt_config.get('name', prompt_name.replace('.json', ''))
-                # 更新用户偏好
-                self.save_user_preferences()
                 return True
             else:
                 # 如果加载失败，尝试加载默认提示词
@@ -90,8 +73,8 @@ class ChatBot:
         
         # 添加历史对话（考虑记忆轮数）
         if self.memory_rounds > 0:
-            # 计算需要保留的历史消息数量（每轮包含用户消息和助手回复）
-            max_messages = self.memory_rounds * 2
+            # 计算需要保留的历史消息数量
+            max_messages = self.memory_rounds 
             recent_history = self.chat_history[-max_messages:] if max_messages > 0 else self.chat_history
         else:
             # 如果记忆轮数为0，只使用系统提示词
@@ -116,12 +99,6 @@ class ChatBot:
         """流式聊天"""
         if not self.api_key:
             raise Exception("请先设置API密钥")
-        
-        # 添加用户消息到历史
-        self.chat_history.append({
-            "role": "user",
-            "content": user_input
-        })
         
         try:
             headers = {
@@ -165,6 +142,12 @@ class ChatBot:
                                     yield content  # 直接返回内容，不添加换行
                         except json.JSONDecodeError:
                             continue
+
+            # 添加用户消息到历史
+            self.chat_history.append({
+                "role": "user",
+                "content": user_input
+            })
             
             # 添加助手回复到历史
             self.chat_history.append({
@@ -208,11 +191,16 @@ class ChatBot:
         """加载自动保存"""
         chat_data = storage_manager.load_auto_save()
         if chat_data:
+            # 从autosave加载数据
             self.chat_history = chat_data.get('chat_history', [])
             self.memory_rounds = chat_data.get('memory_rounds', 6)
             self.load_prompt(chat_data.get('prompt_name', 'default_prompt.json'))
             return True
-        return False
+        else:
+            # 如果autosave不存在，使用默认值
+            self.load_prompt("default_prompt.json")
+            self.memory_rounds = 6
+            return False
     
     def clear_chat(self):
         """清空聊天记录"""
@@ -221,4 +209,5 @@ class ChatBot:
     def set_memory_rounds(self, rounds: int):
         """设置记忆轮数"""
         self.memory_rounds = max(0, rounds)  # 确保非负
-        self.save_user_preferences()
+        # 立即保存到autosave
+        self.auto_save()

@@ -97,26 +97,6 @@ class StorageManager:
         config_path = os.path.join(self.base_dir, 'config', 'api_key.json')
         return self._write_json_file(config_path, config)
     
-    def load_user_preferences(self) -> Dict[str, Any]:
-        """加载用户偏好设置"""
-        prefs_path = os.path.join(self.base_dir, 'config', 'user_preferences.json')
-        preferences = self._read_json_file(prefs_path)
-        
-        # 如果文件不存在或缺少字段，使用默认值
-        if not preferences:
-            preferences = {
-                "current_prompt": "default_prompt.json",
-                "memory_rounds": 6
-            }
-            self.save_user_preferences(preferences)
-        
-        return preferences
-    
-    def save_user_preferences(self, preferences: Dict[str, Any]) -> bool:
-        """保存用户偏好设置"""
-        prefs_path = os.path.join(self.base_dir, 'config', 'user_preferences.json')
-        return self._write_json_file(prefs_path, preferences)
-    
     # ===== 提示词管理 =====
     def load_prompt(self, prompt_name: str) -> Dict[str, Any]:
         """加载提示词配置"""

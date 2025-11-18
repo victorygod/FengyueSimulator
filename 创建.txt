@@ -338,6 +338,118 @@ resource目录下的文件名需要支持中文文件名
 界面上的记忆轮数去掉设置按钮，失焦则更新。
 title和<h1></h1>中的内容不是要替换成提示词文件的文件名，而是提示词json的name字段
 
+
+chat_core.py中的两个函数改成这样：
+    def build_messages(self, user_input: str) -> List[Dict[str, str]]:
+        """构建消息列表，考虑记忆轮数"""
+        messages = []
+        
+        # 添加系统提示词
+        if self.prompt_config.get('pre_prompt'):
+            messages.append({
+                "role": "system",
+                "content": self.prompt_config['pre_prompt']
+            })
+        
+        # 添加历史对话（考虑记忆轮数）
+        if self.memory_rounds > 0:
+            # 计算需要保留的历史消息数量
+            max_messages = self.memory_rounds 
+            recent_history = self.chat_history[-max_messages:] if max_messages > 0 else self.chat_history
+        else:
+            # 如果记忆轮数为0，只使用系统提示词
+            recent_history = []
+        
+        for msg in recent_history:
+            messages.append(msg)
+        
+        # 添加当前用户输入
+        pre_text = self.prompt_config.get('pre_text', '')
+        post_text = self.prompt_config.get('post_text', '')
+        user_message = f"{pre_text}{user_input}{post_text}"
+        
+        messages.append({
+            "role": "user",
+            "content": user_message
+        })
+        
+        return messages
+    
+    def stream_chat(self, user_input: str) -> Generator[str, None, None]:
+        """流式聊天"""
+        if not self.api_key:
+            raise Exception("请先设置API密钥")
+        
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            
+            data = {
+                "model": "deepseek-chat",
+                "messages": self.build_messages(user_input),
+                "stream": True
+            }
+            print(data)
+            response = requests.post(
+                self.base_url,
+                headers=headers,
+                json=data,
+                stream=True,
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                error_msg = f"API请求失败: {response.status_code} - {response.text}"
+                raise Exception(error_msg)
+            
+            assistant_response = ""
+            for line in response.iter_lines():
+                if line:
+                    line = line.decode('utf-8')
+                    if line.startswith('data: '):
+                        data_str = line[6:]
+                        if data_str == '[DONE]':
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            if 'choices' in data_json and len(data_json['choices']) > 0:
+                                delta = data_json['choices'][0].get('delta', {})
+                                if 'content' in delta:
+                                    content = delta['content']
+                                    assistant_response += content
+                                    yield content  # 直接返回内容，不添加换行
+                        except json.JSONDecodeError:
+                            continue
+
+            # 添加用户消息到历史
+            self.chat_history.append({
+                "role": "user",
+                "content": user_input
+            })
+            
+            # 添加助手回复到历史
+            self.chat_history.append({
+                "role": "assistant",
+                "content": assistant_response
+            })
+            
+            # 检测并处理图片
+            image_files = self.detect_images_in_response(assistant_response)
+            for image_file in image_files:
+                yield f"\n[图片: {image_file}]"
+            
+            # 自动保存
+            self.auto_save()
+            
+        except Exception as e:
+            raise Exception(f"聊天失败: {str(e)}")
+
+提示词页面需要让我能够编辑提示词json的name字段。
+刚打开页面的时候，<h1>里显示的是“默认提示词”，而不是从autosave文件里加载出来的提示词json的name字段内容。请分析为什么会这样并给出解决方案。
+
+
 完整输出每个文件的内容。
 所有交互和通信都需要支持中文。
 在android上运行前，用Buildozer打包成apk

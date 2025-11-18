@@ -76,12 +76,14 @@ def register_chat_apis(chat_bot):
             "chat_history": chat_bot.chat_history,
             "current_prompt": chat_bot.current_prompt,
             "memory_rounds": chat_bot.memory_rounds,
-            "prompt_name": chat_bot.prompt_name  # 新增：返回提示词名称
+            "prompt_name": chat_bot.prompt_name  # 返回提示词名称
         }
     
     # 清空聊天
     def clear_chat(data):
         chat_bot.clear_chat()
+        # 清空后立即保存
+        chat_bot.auto_save()
         return {"status": "success", "message": "聊天已清空"}
     
     # 获取API密钥状态
@@ -121,6 +123,8 @@ def register_chat_apis(chat_bot):
         
         success = chat_bot.load_prompt(data['prompt_name'])
         if success:
+            # 切换提示词后立即保存
+            chat_bot.auto_save()
             return {"status": "success", "message": f"已切换到提示词: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"切换提示词失败: {data['prompt_name']}"}
@@ -143,6 +147,10 @@ def register_chat_apis(chat_bot):
         
         success = storage_manager.delete_prompt(data['prompt_name'])
         if success:
+            # 如果删除的是当前提示词，切换到默认提示词
+            if chat_bot.current_prompt == data['prompt_name']:
+                chat_bot.load_prompt("default_prompt.json")
+                chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已删除: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"删除提示词失败: {data['prompt_name']}"}
@@ -154,6 +162,10 @@ def register_chat_apis(chat_bot):
         
         success = storage_manager.rename_prompt(data['old_name'], data['new_name'])
         if success:
+            # 如果重命名的是当前提示词，更新当前提示词
+            if chat_bot.current_prompt == data['old_name']:
+                chat_bot.current_prompt = data['new_name']
+                chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
             return {"status": "error", "message": f"重命名提示词失败"}
