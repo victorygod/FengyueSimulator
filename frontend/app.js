@@ -4,6 +4,7 @@ class ChatApp {
         this.apiBase = '/api';
         this.currentResponse = '';
         this.isStreaming = false;
+        this.currentPromptName = "默认提示词"; // 存储当前提示词的name字段
         
         // 初始化
         this.init();
@@ -14,6 +15,7 @@ class ChatApp {
         this.loadChatHistory();
         this.updateApiKeyStatus();
         this.updatePromptIndicator();
+        this.loadMemoryRounds();
     }
     
     bindEvents() {
@@ -37,6 +39,14 @@ class ChatApp {
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 this.hideModal();
+            }
+        });
+        
+        // 记忆轮数失焦更新
+        document.getElementById('memoryRounds').addEventListener('blur', () => this.setMemoryRounds());
+        document.getElementById('memoryRounds').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.setMemoryRounds();
             }
         });
     }
@@ -63,7 +73,7 @@ class ChatApp {
             return { status: 'error', message: '网络请求失败' };
         }
     }
-        
+    
     // 流式聊天
     async streamChat(message) {
         this.isStreaming = true;
@@ -218,7 +228,7 @@ class ChatApp {
         
         matches.forEach(match => {
             const filename = match[1];
-            const imageUrl = `/resource/${filename}`;
+            const imageUrl = `/resource/${encodeURIComponent(filename)}`;
             
             // 创建图片元素
             const img = document.createElement('img');
@@ -270,6 +280,42 @@ class ChatApp {
         
         // 可以根据类型添加不同的样式
         statusText.className = type;
+    }
+    
+    // 记忆轮数相关方法
+    async loadMemoryRounds() {
+        const result = await this.apiCall('chat/history');
+        if (result.status === 'success') {
+            document.getElementById('memoryRounds').value = result.memory_rounds || 6;
+        }
+    }
+    
+    async setMemoryRounds() {
+        const rounds = parseInt(document.getElementById('memoryRounds').value);
+        if (isNaN(rounds) || rounds < 0) {
+            alert('请输入有效的记忆轮数（0-20）');
+            return;
+        }
+        
+        const result = await this.apiCall('memory_rounds/set', 'POST', { memory_rounds: rounds });
+        if (result.status === 'success') {
+            this.showStatus(`记忆轮数已设置为: ${rounds}`);
+        } else {
+            alert('设置失败: ' + result.message);
+        }
+    }
+    
+    // 更新提示词指示器和标题
+    updatePromptIndicator() {
+        const indicator = document.getElementById('promptIndicator');
+        const title = document.getElementById('pageTitle');
+        const mainTitle = document.getElementById('mainTitle');
+        
+        if (indicator && title && mainTitle) {
+            indicator.textContent = this.currentPromptName;
+            title.textContent = `${this.currentPromptName} - 聊天机器人`;
+            mainTitle.textContent = this.currentPromptName;
+        }
     }
     
     // 模态框管理
@@ -358,12 +404,12 @@ class ChatApp {
         }
     }
     
-    // // 提示词管理
+    // 提示词管理
     async showPromptsModal() {
         this.showModal('提示词管理', 'promptsTemplate');
         await this.loadPrompts();
     }
-
+    
     async setupPromptsModal() {
         await this.loadPrompts();
         
@@ -393,6 +439,7 @@ class ChatApp {
             }
             
             const promptData = {
+                name: this.currentPromptName, // 保存当前显示的name
                 pre_prompt: document.getElementById('prePrompt').value,
                 pre_text: document.getElementById('preText').value,
                 post_text: document.getElementById('postText').value
@@ -415,18 +462,22 @@ class ChatApp {
         document.getElementById('newPrompt').addEventListener('click', async () => {
             const newName = document.getElementById('newPromptName').value.trim();
             if (!newName) {
-                alert('请输入新提示词名称');
+                alert('请输入新提示词文件名');
                 return;
             }
             
+            // 确保文件名有.json后缀
+            const fileName = newName.endsWith('.json') ? newName : newName + '.json';
+            
             const promptData = {
+                name: newName.replace('.json', ''), // 使用文件名作为name
                 pre_prompt: document.getElementById('prePrompt').value,
                 pre_text: document.getElementById('preText').value,
                 post_text: document.getElementById('postText').value
             };
             
             const result = await this.apiCall('prompt/save', 'POST', {
-                prompt_name: newName,
+                prompt_name: fileName,
                 prompt_data: promptData
             });
             
@@ -436,7 +487,7 @@ class ChatApp {
                 document.getElementById('newPromptName').value = '';
                 
                 // 自动切换到新创建的提示词
-                const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: newName });
+                const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: fileName });
                 if (switchResult.status === 'success') {
                     this.updatePromptIndicator();
                 }
@@ -455,7 +506,7 @@ class ChatApp {
                 return;
             }
             
-            if (promptName === 'default_prompt') {
+            if (promptName === 'default_prompt.json') {
                 alert('不能删除默认提示词');
                 return;
             }
@@ -483,19 +534,22 @@ class ChatApp {
             }
             
             if (!newName) {
-                alert('请输入新的提示词名称');
+                alert('请输入新的提示词文件名');
                 return;
             }
             
-            if (oldName === 'default_prompt') {
+            if (oldName === 'default_prompt.json') {
                 alert('不能重命名默认提示词');
                 return;
             }
             
-            if (confirm(`确定要将提示词 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+            // 确保新文件名有.json后缀
+            const fileName = newName.endsWith('.json') ? newName : newName + '.json';
+            
+            if (confirm(`确定要将提示词 "${oldName}" 重命名为 "${fileName}" 吗？`)) {
                 const result = await this.apiCall('prompt/rename', 'POST', {
                     old_name: oldName,
-                    new_name: newName
+                    new_name: fileName
                 });
                 
                 if (result.status === 'success') {
@@ -527,6 +581,9 @@ class ChatApp {
                 }
                 select.appendChild(option);
             });
+            
+            // 更新标题
+            this.updateTitles(result.current_config);
         }
     }
     
@@ -536,14 +593,16 @@ class ChatApp {
             document.getElementById('prePrompt').value = result.current_config.pre_prompt || '';
             document.getElementById('preText').value = result.current_config.pre_text || '';
             document.getElementById('postText').value = result.current_config.post_text || '';
+            
+            // 更新标题和当前提示词名称
+            this.updateTitles(result.current_config);
         }
     }
     
-    updatePromptIndicator() {
-        const indicator = document.getElementById('promptIndicator');
-        if (indicator) {
-            indicator.textContent = '提示词已加载';
-        }
+    updateTitles(promptConfig) {
+        // 使用提示词配置中的name字段
+        this.currentPromptName = promptConfig.name || '默认提示词';
+        this.updatePromptIndicator();
     }
     
     // 存档管理
@@ -565,11 +624,14 @@ class ChatApp {
         
         // 保存聊天
         document.getElementById('saveChat').addEventListener('click', async () => {
-            const saveName = document.getElementById('newSaveName').value.trim();
+            let saveName = document.getElementById('newSaveName').value.trim();
             if (!saveName) {
-                alert('请输入存档名称');
+                alert('请输入存档文件名');
                 return;
             }
+            
+            // 确保文件名有.json后缀
+            saveName = saveName.endsWith('.json') ? saveName : saveName + '.json';
             
             // 先尝试保存，如果已存在会返回exists状态
             const result = await this.apiCall('save', 'POST', { filename: saveName });
@@ -609,6 +671,7 @@ class ChatApp {
                     this.showStatus('聊天已加载');
                     this.hideModal();
                     this.loadChatHistory();
+                    this.loadMemoryRounds();
                 } else {
                     alert('加载失败: ' + result.message);
                 }
@@ -641,7 +704,7 @@ class ChatApp {
         document.getElementById('renameSave').addEventListener('click', async () => {
             const select = document.getElementById('savesSelect');
             const oldName = select.value;
-            const newName = document.getElementById('newSaveName').value.trim();
+            let newName = document.getElementById('newSaveName').value.trim();
             
             if (!oldName) {
                 alert('请选择要重命名的存档');
@@ -649,9 +712,12 @@ class ChatApp {
             }
             
             if (!newName) {
-                alert('请输入新的存档名称');
+                alert('请输入新的存档文件名');
                 return;
             }
+            
+            // 确保新文件名有.json后缀
+            newName = newName.endsWith('.json') ? newName : newName + '.json';
             
             if (confirm(`确定要将存档 "${oldName}" 重命名为 "${newName}" 吗？`)) {
                 const result = await this.apiCall('save/rename', 'POST', {
@@ -700,10 +766,12 @@ class ChatApp {
             const preview = document.getElementById('resourcePreview');
             
             if (filename && this.isImageFile(filename)) {
-                preview.src = `/resource/${filename}`;
+                preview.src = `/resource/${encodeURIComponent(filename)}`;
                 preview.style.display = 'block';
+                document.getElementById('previewPlaceholder').style.display = 'none';
             } else {
                 preview.style.display = 'none';
+                document.getElementById('previewPlaceholder').style.display = 'flex';
             }
         });
         
@@ -736,6 +804,7 @@ class ChatApp {
                     this.showStatus('资源文件已删除');
                     this.loadResources();
                     document.getElementById('resourcePreview').style.display = 'none';
+                    document.getElementById('previewPlaceholder').style.display = 'flex';
                 } else {
                     alert('删除失败: ' + result.message);
                 }
@@ -769,6 +838,7 @@ class ChatApp {
                     this.loadResources();
                     document.getElementById('newResourceName').value = '';
                     document.getElementById('resourcePreview').style.display = 'none';
+                    document.getElementById('previewPlaceholder').style.display = 'flex';
                 } else {
                     alert('重命名失败: ' + result.message);
                 }

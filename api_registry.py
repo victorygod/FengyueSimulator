@@ -74,7 +74,9 @@ def register_chat_apis(chat_bot):
         return {
             "status": "success", 
             "chat_history": chat_bot.chat_history,
-            "current_prompt": chat_bot.current_prompt
+            "current_prompt": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds,
+            "prompt_name": chat_bot.prompt_name  # 新增：返回提示词名称
         }
     
     # 清空聊天
@@ -173,7 +175,8 @@ def register_chat_apis(chat_bot):
         
         chat_data = {
             "chat_history": chat_bot.chat_history,
-            "prompt_name": chat_bot.current_prompt
+            "prompt_name": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds
         }
         
         success = storage_manager.save_chat(data['filename'], chat_data)
@@ -189,7 +192,8 @@ def register_chat_apis(chat_bot):
         
         chat_data = {
             "chat_history": chat_bot.chat_history,
-            "prompt_name": chat_bot.current_prompt
+            "prompt_name": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds
         }
         
         success = storage_manager.save_chat(data['filename'], chat_data)
@@ -206,7 +210,8 @@ def register_chat_apis(chat_bot):
         chat_data = storage_manager.load_chat(data['filename'])
         if chat_data:
             chat_bot.chat_history = chat_data.get('chat_history', [])
-            chat_bot.load_prompt(chat_data.get('prompt_name', 'default'))
+            chat_bot.memory_rounds = chat_data.get('memory_rounds', 6)
+            chat_bot.load_prompt(chat_data.get('prompt_name', 'default_prompt.json'))
             return {"status": "success", "message": f"聊天已加载: {data['filename']}"}
         else:
             return {"status": "error", "message": f"加载聊天失败: {data['filename']}"}
@@ -260,6 +265,18 @@ def register_chat_apis(chat_bot):
         else:
             return {"status": "error", "message": f"重命名资源文件失败"}
     
+    # 设置记忆轮数
+    def set_memory_rounds(data):
+        if not data or 'memory_rounds' not in data:
+            return {"status": "error", "message": "缺少记忆轮数参数"}
+        
+        try:
+            rounds = int(data['memory_rounds'])
+            chat_bot.set_memory_rounds(rounds)
+            return {"status": "success", "message": f"记忆轮数已设置为: {rounds}"}
+        except ValueError:
+            return {"status": "error", "message": "记忆轮数必须是整数"}
+    
     # 流式聊天（特殊处理）
     def stream_chat(data):
         if not data or 'message' not in data:
@@ -288,6 +305,7 @@ def register_chat_apis(chat_bot):
     api_registry.register_route('resources', 'GET', get_resources)
     api_registry.register_route('resource/delete', 'POST', delete_resource)
     api_registry.register_route('resource/rename', 'POST', rename_resource)
+    api_registry.register_route('memory_rounds/set', 'POST', set_memory_rounds)
     api_registry.register_route('chat/stream', 'POST', stream_chat)
     
     # 注册静态文件路由

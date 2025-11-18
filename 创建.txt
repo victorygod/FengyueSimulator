@@ -311,7 +311,7 @@ class AndroidPlatform:
 其他需求：
 platform_*需要彻底业务无关，比如endpoit的解析（即api路由）完全可以通过api_registry.py里的逻辑在platform_*中注册，这样当新增api时，我们只需要改api_registry和前端，不用改platform_*。
 chat_core里会根据我的输入，拼到聊天历史里作为提示词，调用deepseek api生成回复，新增到聊天历史。
-默认提示词存储在prompts/default_prompt.json里（json变成三个field：pre_prompt, pre_text, post_text，分别用来做主提示词，每次我说的话的前缀和后缀。）, 并且界面支持我选择/修改/新建/复制/删除/重命名不同的提示词文件。修改后，重新加载提示词和当前聊天历史，继续聊天。
+默认提示词存储在prompts/default_prompt.json里（json包含以下field：name,pre_prompt, pre_text, post_text，分别用来做提示词名字（无实际意义），主提示词，每次我说的话的前缀和后缀。）, 并且界面支持我选择/修改/新建/复制/删除/重命名不同的提示词文件。修改后，重新加载提示词和当前聊天历史，继续聊天。
 api_key一开始为空，在界面上添加按钮让我能够查看并修改api_key，然后存在本地。（下次打开app或网页就自动读取本地存的api_key，和config.json一样）；
 对于save目录下的聊天历史，在保存时需要支持新建/覆盖存档文件（点到一个已存在的存档就提示我是否覆盖），在加载时需要支持删除/加载存档。autosave功能会保留进5次存档，每次deepseek流式回复结束就自动保存，例如：每次deepseek回复完毕，都会先将autosave_5删掉（如有），autosave_4重命名为autosave_5, autosave_3重命名为autosave_4……autosave重命名为autosave_1,然后把当前聊天历史存入新建的autosave文件。重新打开app或界面，自动加载autosave，并将内容显示到界面上。
 检测deepseek回复的内容，如果出现了某个resource目录下的图片的文件名则在deepseek回复结束后，回复一张这个图片。
@@ -329,13 +329,14 @@ api_key一开始为空，在界面上添加按钮让我能够查看并修改api_
 resource目录下的文件名需要支持中文文件名
 对话框布局需要优化一下，图片预览窗口位置太小了，而左侧有大量空白，请合理安排布局。
 
-提示词管理页面需要添加保存修改按钮，把另存为按钮改为保存按钮，默认保存修改到当前文件。新增新建文件按钮，新提示词文件内容为当前展示的内容。
-StorageManager.load_prompt里面else部分改成这样：
-else:
-    logger.error(f"无法加载提示词文件: {str(prompt_path)}")
-    return {}
-ChatBot初始化时，self.current_prompt = "default"，后来self.load_config()也没更新这个self.current_prompt，导致找不到提示词文件。然后后面也没有地方能够更新它。应该在StorageManager.load_prompt时就立刻更新ChatBot.current_prompt，我觉得ChatBot.load_prompt里面直接更新一下self.current_prompt大概就能解决问题。
+把当前页面的title和<h1></h1>中的内容替换成当前选中的提示词文件的name字段。
+界面上新增记忆轮数的设定，这个设定用来控制每次最多把多少轮以前的聊天记录一起发给deepseek。
+让提示词、api_key、存档的管理页面里输入名字或显示名字时都带上后缀名，尤其是新建文件或重命名时，让我完整输入带有后缀名的文件名字
+在config文件夹下新增用户偏好文件，主要存储用户上一次使用习惯的设定，目前仅包括使用的提示词文件名，记忆轮数。如果文件不存在，先用默认值（记忆轮数6，提示词文件名default_prompt.json）新建一个user_preferences，然后再加载。
+把storage_manager.py文件中的方法整合缩减，比如重命名文件、删除文件等操作完全可以只写一个方法。
 
+界面上的记忆轮数去掉设置按钮，失焦则更新。
+title和<h1></h1>中的内容不是要替换成提示词文件的文件名，而是提示词json的name字段
 
 完整输出每个文件的内容。
 所有交互和通信都需要支持中文。
