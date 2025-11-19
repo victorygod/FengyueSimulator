@@ -22,7 +22,6 @@ class ChatBot:
         self.api_key = ""
         self.base_url = "https://api.deepseek.com/v1/chat/completions"
         self.memory_rounds = 6  # 默认记忆轮数
-        self.prompt_name = "默认提示词"  # 存储提示词的name字段
         
         # 加载配置和自动保存
         self.load_config()
@@ -44,8 +43,6 @@ class ChatBot:
             if prompt_config:
                 self.prompt_config = prompt_config
                 self.current_prompt = prompt_name
-                # 更新提示词名称
-                self.prompt_name = prompt_config.get('name', prompt_name.replace('.json', ''))
                 return True
             else:
                 # 如果加载失败，尝试加载默认提示词
@@ -65,19 +62,18 @@ class ChatBot:
         messages = []
         
         # 添加系统提示词
-        if self.prompt_config.get('pre_prompt'):
+        pre_prompt = self.prompt_config.get('pre_prompt', '')
+        if pre_prompt:
             messages.append({
                 "role": "system",
-                "content": self.prompt_config['pre_prompt']
+                "content": pre_prompt
             })
         
         # 添加历史对话（考虑记忆轮数）
         if self.memory_rounds > 0:
-            # 计算需要保留的历史消息数量
             max_messages = self.memory_rounds 
             recent_history = self.chat_history[-max_messages:] if max_messages > 0 else self.chat_history
         else:
-            # 如果记忆轮数为0，只使用系统提示词
             recent_history = []
         
         for msg in recent_history:
@@ -139,7 +135,7 @@ class ChatBot:
                                 if 'content' in delta:
                                     content = delta['content']
                                     assistant_response += content
-                                    yield content  # 直接返回内容，不添加换行
+                                    yield content
                         except json.JSONDecodeError:
                             continue
 
@@ -208,6 +204,5 @@ class ChatBot:
     
     def set_memory_rounds(self, rounds: int):
         """设置记忆轮数"""
-        self.memory_rounds = max(0, rounds)  # 确保非负
-        # 立即保存到autosave
+        self.memory_rounds = max(0, rounds)
         self.auto_save()

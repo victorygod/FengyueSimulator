@@ -4,27 +4,21 @@ class ChatApp {
         this.apiBase = '/api';
         this.currentResponse = '';
         this.isStreaming = false;
-        this.currentPromptName = "默认提示词"; // 存储当前提示词的name字段
+        this.currentPromptName = "默认提示词";
         
-        // 初始化
         this.init();
     }
     
     init() {
         this.bindEvents();
-        this.loadChatHistory();
-        this.updateApiKeyStatus();
-        this.updatePromptIndicator();
-        this.loadMemoryRounds();
+        this.loadInitialData();
     }
     
     bindEvents() {
         // 发送消息
         document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendMessage();
-            }
+            if (e.key === 'Enter') this.sendMessage();
         });
         
         // 控制按钮
@@ -37,18 +31,21 @@ class ChatApp {
         // 模态框
         document.getElementById('closeModal').addEventListener('click', () => this.hideModal());
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
+            if (e.target === e.currentTarget) this.hideModal();
         });
         
-        // 记忆轮数失焦更新
+        // 记忆轮数
         document.getElementById('memoryRounds').addEventListener('blur', () => this.setMemoryRounds());
         document.getElementById('memoryRounds').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.setMemoryRounds();
-            }
+            if (e.key === 'Enter') this.setMemoryRounds();
         });
+    }
+    
+    async loadInitialData() {
+        await this.loadChatHistory();
+        await this.updateApiKeyStatus();
+        await this.loadMemoryRounds();
+        this.updatePromptIndicator();
     }
     
     // API调用方法
@@ -56,9 +53,7 @@ class ChatApp {
         try {
             const options = {
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
             };
             
             if (data && method !== 'GET') {
@@ -82,9 +77,7 @@ class ChatApp {
         try {
             const response = await fetch(`${this.apiBase}/chat/stream`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ message: message }),
             });
             
@@ -96,31 +89,22 @@ class ChatApp {
             const decoder = new TextDecoder('utf-8');
             this.currentResponse = '';
             
-            // 添加助手消息占位符
             const messageId = this.addMessage('assistant', '');
             
             while (this.isStreaming) {
                 const { done, value } = await reader.read();
+                if (done) break;
                 
-                if (done) {
-                    break;
-                }
-                
-                // 直接解码数据，不需要处理chunked encoding
                 const chunk = decoder.decode(value, { stream: true });
                 this.currentResponse += chunk;
-                
-                // 更新消息内容
                 this.updateMessageContent(messageId, this.currentResponse);
             }
             
-            // 处理消息中的图片
             this.processImagesInMessage(messageId, this.currentResponse);
             
         } catch (error) {
             console.error('流式聊天错误:', error);
             
-            // 检查是否是API密钥错误
             if (error.message.includes('API密钥') || error.message.includes('请先设置API密钥')) {
                 alert('错误：请先设置API密钥');
                 this.showApiKeyModal();
@@ -139,27 +123,17 @@ class ChatApp {
         const input = document.getElementById('messageInput');
         const message = input.value.trim();
         
-        if (!message || this.isStreaming) {
-            return;
-        }
+        if (!message || this.isStreaming) return;
         
-        // 清空输入框
         input.value = '';
-        
-        // 添加用户消息
         this.addMessage('user', message);
-        
-        // 滚动到底部
         this.scrollToBottom();
-        
-        // 显示发送状态
         this.showStatus('正在思考...');
         
-        // 发送消息
         await this.streamChat(message);
     }
     
-    // 添加消息到聊天历史
+    // 消息管理
     addMessage(role, content) {
         const chatHistory = document.getElementById('chatHistory');
         const messageId = 'msg_' + Date.now();
@@ -172,7 +146,6 @@ class ChatApp {
         contentDiv.className = 'message-content';
         
         if (role === 'assistant' && content === '') {
-            // 显示输入中状态
             contentDiv.innerHTML = `
                 <div class="typing-indicator">
                     <div class="typing-dots">
@@ -198,18 +171,15 @@ class ChatApp {
         return messageId;
     }
     
-    // 更新消息内容
     updateMessageContent(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         if (messageDiv) {
             const contentDiv = messageDiv.querySelector('.message-content');
             
-            // 移除输入中状态
             if (contentDiv.querySelector('.typing-indicator')) {
                 contentDiv.innerHTML = '';
             }
             
-            // 添加内容（支持简单的Markdown样式）
             const formattedContent = this.formatMessage(content);
             contentDiv.innerHTML = formattedContent;
         }
@@ -217,12 +187,10 @@ class ChatApp {
         this.scrollToBottom();
     }
     
-    // 处理消息中的图片
     processImagesInMessage(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         if (!messageDiv) return;
         
-        // 查找图片文件名模式
         const imagePattern = /\[图片: ([^\]]+)\]/g;
         const matches = [...content.matchAll(imagePattern)];
         
@@ -230,7 +198,6 @@ class ChatApp {
             const filename = match[1];
             const imageUrl = `/resource/${encodeURIComponent(filename)}`;
             
-            // 创建图片元素
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = filename;
@@ -239,15 +206,11 @@ class ChatApp {
             
             const contentDiv = messageDiv.querySelector('.message-content');
             contentDiv.appendChild(img);
-            
-            // 移除图片标记
             contentDiv.innerHTML = contentDiv.innerHTML.replace(match[0], '');
         });
     }
     
-    // 格式化消息内容
     formatMessage(content) {
-        // 简单的格式化处理，保持原有的换行但不添加额外换行
         return content
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -255,13 +218,11 @@ class ChatApp {
             .replace(/`(.*?)`/g, '<code>$1</code>');
     }
     
-    // 滚动到底部
     scrollToBottom() {
         const chatHistory = document.getElementById('chatHistory');
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
     
-    // 更新发送按钮状态
     updateSendButton() {
         const sendBtn = document.getElementById('sendBtn');
         if (this.isStreaming) {
@@ -273,16 +234,13 @@ class ChatApp {
         }
     }
     
-    // 显示状态信息
     showStatus(message, type = 'info') {
         const statusText = document.getElementById('statusText');
         statusText.textContent = message;
-        
-        // 可以根据类型添加不同的样式
         statusText.className = type;
     }
     
-    // 记忆轮数相关方法
+    // 记忆轮数
     async loadMemoryRounds() {
         const result = await this.apiCall('chat/history');
         if (result.status === 'success') {
@@ -316,6 +274,11 @@ class ChatApp {
             title.textContent = `${this.currentPromptName} - 聊天机器人`;
             mainTitle.textContent = this.currentPromptName;
         }
+    }
+    
+    updateTitles(promptConfig) {
+        this.currentPromptName = promptConfig.name || '默认提示词';
+        this.updatePromptIndicator();
     }
     
     // 模态框管理
@@ -359,10 +322,8 @@ class ChatApp {
     }
     
     async setupApiKeyModal() {
-        // 加载当前API密钥状态
         await this.updateApiKeyStatus();
         
-        // 保存API密钥
         document.getElementById('saveApiKey').addEventListener('click', async () => {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
             if (!apiKey) {
@@ -380,7 +341,6 @@ class ChatApp {
             }
         });
         
-        // 显示/隐藏API密钥
         document.getElementById('toggleApiKeyVisibility').addEventListener('click', () => {
             const input = document.getElementById('apiKeyInput');
             input.type = input.type === 'password' ? 'text' : 'password';
@@ -396,10 +356,10 @@ class ChatApp {
                 statusElement.className = result.has_api_key ? 'status-ok' : 'status-error';
             }
             
-            // 更新输入框
             const apiKeyInput = document.getElementById('apiKeyInput');
             if (apiKeyInput) {
-                apiKeyInput.value = result.api_key_set || '';
+                // 显示真实API密钥
+                apiKeyInput.value = result.api_key || '';
             }
         }
     }
@@ -413,7 +373,6 @@ class ChatApp {
     async setupPromptsModal() {
         await this.loadPrompts();
         
-        // 切换提示词
         document.getElementById('promptSelect').addEventListener('change', async (e) => {
             const promptName = e.target.value;
             if (promptName) {
@@ -428,7 +387,6 @@ class ChatApp {
             }
         });
         
-        // 保存修改到当前文件
         document.getElementById('savePrompt').addEventListener('click', async () => {
             const select = document.getElementById('promptSelect');
             const currentPrompt = select.value;
@@ -438,27 +396,26 @@ class ChatApp {
                 return;
             }
             
-            const promptData = {
-                name: this.currentPromptName, // 保存当前显示的name
-                pre_prompt: document.getElementById('prePrompt').value,
-                pre_text: document.getElementById('preText').value,
-                post_text: document.getElementById('postText').value
-            };
-            
-            const result = await this.apiCall('prompt/save', 'POST', {
-                prompt_name: currentPrompt,
-                prompt_data: promptData
-            });
-            
-            if (result.status === 'success') {
-                this.showStatus('提示词已保存');
-                this.loadPrompts();
-            } else {
-                alert('保存失败: ' + result.message);
+            try {
+                const promptJson = document.getElementById('promptJsonEditor').value;
+                const promptData = JSON.parse(promptJson);
+                
+                const result = await this.apiCall('prompt/save', 'POST', {
+                    prompt_name: currentPrompt,
+                    prompt_data: promptData
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('提示词已保存');
+                    this.loadPrompts();
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            } catch (e) {
+                alert('JSON格式错误: ' + e.message);
             }
         });
         
-        // 新建提示词文件
         document.getElementById('newPrompt').addEventListener('click', async () => {
             const newName = document.getElementById('newPromptName').value.trim();
             if (!newName) {
@@ -466,37 +423,34 @@ class ChatApp {
                 return;
             }
             
-            // 确保文件名有.json后缀
             const fileName = newName.endsWith('.json') ? newName : newName + '.json';
             
-            const promptData = {
-                name: newName.replace('.json', ''), // 使用文件名作为name
-                pre_prompt: document.getElementById('prePrompt').value,
-                pre_text: document.getElementById('preText').value,
-                post_text: document.getElementById('postText').value
-            };
-            
-            const result = await this.apiCall('prompt/save', 'POST', {
-                prompt_name: fileName,
-                prompt_data: promptData
-            });
-            
-            if (result.status === 'success') {
-                this.showStatus('新提示词已创建');
-                this.loadPrompts();
-                document.getElementById('newPromptName').value = '';
+            try {
+                const promptJson = document.getElementById('promptJsonEditor').value;
+                const promptData = JSON.parse(promptJson);
                 
-                // 自动切换到新创建的提示词
-                const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: fileName });
-                if (switchResult.status === 'success') {
-                    this.updatePromptIndicator();
+                const result = await this.apiCall('prompt/save', 'POST', {
+                    prompt_name: fileName,
+                    prompt_data: promptData
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('新提示词已创建');
+                    this.loadPrompts();
+                    document.getElementById('newPromptName').value = '';
+                    
+                    const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: fileName });
+                    if (switchResult.status === 'success') {
+                        this.updatePromptIndicator();
+                    }
+                } else {
+                    alert('创建失败: ' + result.message);
                 }
-            } else {
-                alert('创建失败: ' + result.message);
+            } catch (e) {
+                alert('JSON格式错误: ' + e.message);
             }
         });
         
-        // 删除提示词
         document.getElementById('deletePrompt').addEventListener('click', async () => {
             const select = document.getElementById('promptSelect');
             const promptName = select.value;
@@ -522,7 +476,6 @@ class ChatApp {
             }
         });
         
-        // 重命名提示词
         document.getElementById('renamePrompt').addEventListener('click', async () => {
             const select = document.getElementById('promptSelect');
             const oldName = select.value;
@@ -543,7 +496,6 @@ class ChatApp {
                 return;
             }
             
-            // 确保新文件名有.json后缀
             const fileName = newName.endsWith('.json') ? newName : newName + '.json';
             
             if (confirm(`确定要将提示词 "${oldName}" 重命名为 "${fileName}" 吗？`)) {
@@ -562,7 +514,6 @@ class ChatApp {
             }
         });
         
-        // 加载当前提示词配置
         this.loadPromptConfig();
     }
     
@@ -582,7 +533,6 @@ class ChatApp {
                 select.appendChild(option);
             });
             
-            // 更新标题
             this.updateTitles(result.current_config);
         }
     }
@@ -590,19 +540,9 @@ class ChatApp {
     async loadPromptConfig() {
         const result = await this.apiCall('prompts');
         if (result.status === 'success') {
-            document.getElementById('prePrompt').value = result.current_config.pre_prompt || '';
-            document.getElementById('preText').value = result.current_config.pre_text || '';
-            document.getElementById('postText').value = result.current_config.post_text || '';
-            
-            // 更新标题和当前提示词名称
+            document.getElementById('promptJsonEditor').value = JSON.stringify(result.current_config, null, 2);
             this.updateTitles(result.current_config);
         }
-    }
-    
-    updateTitles(promptConfig) {
-        // 使用提示词配置中的name字段
-        this.currentPromptName = promptConfig.name || '默认提示词';
-        this.updatePromptIndicator();
     }
     
     // 存档管理
@@ -614,7 +554,6 @@ class ChatApp {
     async setupSavesModal() {
         await this.loadSaves();
         
-        // 存档选择事件 - 自动填充名称
         document.getElementById('savesSelect').addEventListener('change', (e) => {
             const saveName = e.target.value;
             if (saveName) {
@@ -622,7 +561,6 @@ class ChatApp {
             }
         });
         
-        // 保存聊天
         document.getElementById('saveChat').addEventListener('click', async () => {
             let saveName = document.getElementById('newSaveName').value.trim();
             if (!saveName) {
@@ -630,14 +568,11 @@ class ChatApp {
                 return;
             }
             
-            // 确保文件名有.json后缀
             saveName = saveName.endsWith('.json') ? saveName : saveName + '.json';
             
-            // 先尝试保存，如果已存在会返回exists状态
             const result = await this.apiCall('save', 'POST', { filename: saveName });
             
             if (result.status === 'exists') {
-                // 存档已存在，询问是否覆盖
                 if (confirm(`存档"${saveName}"已存在，是否覆盖？`)) {
                     const forceResult = await this.apiCall('save/force', 'POST', { filename: saveName });
                     if (forceResult.status === 'success') {
@@ -655,7 +590,6 @@ class ChatApp {
             }
         });
         
-        // 加载聊天
         document.getElementById('loadChat').addEventListener('click', async () => {
             const select = document.getElementById('savesSelect');
             const saveName = select.value;
@@ -678,7 +612,6 @@ class ChatApp {
             }
         });
         
-        // 删除存档
         document.getElementById('deleteSave').addEventListener('click', async () => {
             const select = document.getElementById('savesSelect');
             const saveName = select.value;
@@ -700,7 +633,6 @@ class ChatApp {
             }
         });
         
-        // 重命名存档
         document.getElementById('renameSave').addEventListener('click', async () => {
             const select = document.getElementById('savesSelect');
             const oldName = select.value;
@@ -716,7 +648,6 @@ class ChatApp {
                 return;
             }
             
-            // 确保新文件名有.json后缀
             newName = newName.endsWith('.json') ? newName : newName + '.json';
             
             if (confirm(`确定要将存档 "${oldName}" 重命名为 "${newName}" 吗？`)) {
@@ -760,7 +691,6 @@ class ChatApp {
     async setupResourcesModal() {
         await this.loadResources();
         
-        // 资源选择事件 - 显示预览
         document.getElementById('resourcesSelect').addEventListener('change', (e) => {
             const filename = e.target.value;
             const preview = document.getElementById('resourcePreview');
@@ -775,20 +705,14 @@ class ChatApp {
             }
         });
         
-        // 上传文件
         document.getElementById('uploadResource').addEventListener('click', () => {
             document.getElementById('fileUpload').click();
         });
         
         document.getElementById('fileUpload').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // 这里需要实现文件上传逻辑
             alert('文件上传功能需要在服务器端实现特殊处理');
         });
         
-        // 删除资源
         document.getElementById('deleteResource').addEventListener('click', async () => {
             const select = document.getElementById('resourcesSelect');
             const filename = select.value;
@@ -811,7 +735,6 @@ class ChatApp {
             }
         });
         
-        // 重命名资源
         document.getElementById('renameResource').addEventListener('click', async () => {
             const select = document.getElementById('resourcesSelect');
             const oldName = select.value;
@@ -875,6 +798,9 @@ class ChatApp {
             result.chat_history.forEach(msg => {
                 this.addMessage(msg.role, msg.content);
             });
+            
+            // 修复bug：从后端获取当前提示词配置并更新标题
+            this.updateTitles(result.current_config);
             
             this.scrollToBottom();
         }

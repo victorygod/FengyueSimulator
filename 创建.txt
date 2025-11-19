@@ -23,292 +23,7 @@ ChatApp/
     ├── autosave_2.json     # 历史存档2
     └── *.json             # 手动存档文件
 
-以下是platform_web.py的代码（可能有bug，生成代码的时候帮我调试一下）：
-#!/usr/bin/env python3
-"""
-业务无关的Web平台实现
-使用API注册中心处理所有请求，完全与业务逻辑解耦
-"""
-import os
-import webbrowser
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
-import json
-
-# 导入API注册中心
-from api_registry import api_registry
-
-
-class WebChatHandler(SimpleHTTPRequestHandler):
-    """Web聊天请求处理器"""
-    
-    def __init__(self, *args, **kwargs):
-        self.api_registry = api_registry
-        super().__init__(*args, **kwargs)
-    
-    def do_GET(self):
-        """处理GET请求"""
-        parsed_path = urlparse(self.path)
-        
-        # API路由
-        if parsed_path.path.startswith('/api/'):
-            self.handle_api_request(parsed_path.path, 'GET')
-            return
-        
-        # 静态文件路由
-        directory, relative_path = self.api_registry.get_static_route(parsed_path.path)
-        if directory:
-            # 设置静态文件目录
-            self.directory = directory
-            if relative_path == '' or relative_path == '/':
-                self.path = '/index.html'
-            else:
-                self.path = relative_path
-            return super().do_GET()
-        
-        # 默认404
-        self.send_error(404, "文件不存在")
-    
-    def do_POST(self):
-        """处理POST请求"""
-        parsed_path = urlparse(self.path)
-        
-        if parsed_path.path.startswith('/api/'):
-            self.handle_api_request(parsed_path.path, 'POST')
-        else:
-            self.send_error(404, "接口不存在")
-    
-    def handle_api_request(self, path: str, method: str):
-        """处理API请求"""
-        # 提取endpoint
-        endpoint = path[len('/api/'):]
-        
-        try:
-            # 解析请求数据
-            data = None
-            if method == 'POST':
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length).decode('utf-8')
-                
-                # 尝试解析为JSON
-                try:
-                    data = json.loads(post_data)
-                except json.JSONDecodeError:
-                    # 回退到表单数据解析
-                    data = parse_qs(post_data)
-                    # 简化数据格式
-                    simplified_data = {}
-                    for key, value in data.items():
-                        simplified_data[key] = value[0] if value else ''
-                    data = simplified_data
-            
-            # 调用API处理器
-            response = self.api_registry.handle_request(endpoint, method, data)
-            
-            # 发送响应
-            self.send_json_response(response)
-            
-        except Exception as e:
-            self.send_error(500, f"服务器错误: {str(e)}")
-    
-    def send_json_response(self, data):
-        """发送JSON响应"""
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json; charset=utf-8')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
-
-
-class WebPlatform:
-    """Web平台实现"""
-    
-    def __init__(self, chat_bot):
-        self.chat_bot = chat_bot
-        self.port = 8000
-    
-    def start(self):
-        """启动Web服务器"""
-        # 注册API
-        from api_registry import register_chat_apis
-        register_chat_apis(self.chat_bot)
-        
-        # 创建自定义请求处理器
-        def handler_factory(*args, **kwargs):
-            return WebChatHandler(*args, **kwargs)
-        
-        # 启动服务器
-        server = HTTPServer(('localhost', self.port), handler_factory)
-        
-        print(f"聊天服务器已启动，访问 http://localhost:{self.port}")
-        print("按 Ctrl+C 停止服务器")
-        
-        # 自动打开浏览器
-        try:
-            webbrowser.open(f'http://localhost:{self.port}')
-        except:
-            print("无法自动打开浏览器，请手动访问上述地址")
-        
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            print("\n服务器已停止")
-            server.shutdown()
-
-以下是platform_android.py的代码（可能有bug，生成代码的时候帮我调试一下）：
-#!/usr/bin/env python3
-"""
-业务无关的Android平台实现
-使用API注册中心处理所有请求，完全与业务逻辑解耦
-"""
-import os
-import json
-from http.server import HTTPServer
-from threading import Thread
-
-# 导入API注册中心
-from api_registry import api_registry
-
-
-class AndroidHttpHandler:
-    """Android HTTP请求处理器"""
-    
-    def __init__(self, api_registry):
-        self.api_registry = api_registry
-    
-    def handle_request(self, path: str, method: str, body: str = None):
-        """处理HTTP请求"""
-        # 提取endpoint
-        if path.startswith('/api/'):
-            endpoint = path[len('/api/'):]
-            
-            # 解析请求数据
-            data = None
-            if body:
-                try:
-                    data = json.loads(body)
-                except json.JSONDecodeError:
-                    # 简化处理表单数据
-                    from urllib.parse import parse_qs
-                    parsed_data = parse_qs(body)
-                    simplified_data = {}
-                    for key, value in parsed_data.items():
-                        simplified_data[key] = value[0] if value else ''
-                    data = simplified_data
-            
-            # 调用API处理器
-            return self.api_registry.handle_request(endpoint, method, data)
-        
-        # 静态文件路由
-        directory, relative_path = self.api_registry.get_static_route(path)
-        if directory:
-            # 这里简化处理，实际Android应用中需要特殊处理静态文件
-            return {"status": "static", "directory": directory, "path": relative_path}
-        
-        return {"status": "error", "message": "路径不存在"}
-
-
-class AndroidPlatform:
-    """Android平台实现"""
-    
-    def __init__(self, chat_bot):
-        self.chat_bot = chat_bot
-        self.port = 8080
-        self.api_registry = api_registry
-    
-    def start(self):
-        """启动Android应用"""
-        try:
-            from kivy.app import App
-            from kivy.uix.boxlayout import BoxLayout
-            from kivy.uix.webview import WebView
-            
-            # 注册API
-            from api_registry import register_chat_apis
-            register_chat_apis(self.chat_bot)
-            
-            # 创建HTTP处理器
-            http_handler = AndroidHttpHandler(self.api_registry)
-            
-            class ChatWebView(WebView):
-                def __init__(self, http_handler, **kwargs):
-                    super().__init__(**kwargs)
-                    self.http_handler = http_handler
-                
-                def handle_api_request(self, endpoint, method, data=None):
-                    """处理API请求"""
-                    return self.http_handler.handle_request(f'/api/{endpoint}', method, json.dumps(data) if data else None)
-            
-            class ChatAppLayout(BoxLayout):
-                def __init__(self, platform, **kwargs):
-                    super().__init__(**kwargs)
-                    self.orientation = 'vertical'
-                    self.platform = platform
-                    
-                    self.webview = ChatWebView(platform.http_handler)
-                    self.add_widget(self.webview)
-                    
-                    self.setup_javascript_bridge()
-                    self.load_html_interface()
-                
-                def setup_javascript_bridge(self):
-                    """设置JavaScript桥接"""
-                    @self.webview.bind(js_api=self)
-                    def AndroidBridge(instance, value):
-                        return self
-                    
-                    def apiRequest(endpoint, method, data):
-                        """处理API请求"""
-                        try:
-                            result = self.webview.handle_api_request(endpoint, method, data)
-                            return json.dumps(result)
-                        except Exception as e:
-                            return json.dumps({
-                                "status": "error",
-                                "message": f"请求处理失败: {str(e)}"
-                            })
-                    
-                    self.apiRequest = apiRequest
-                
-                def load_html_interface(self):
-                    """加载HTML界面"""
-                    html_path = os.path.join('frontend', 'index.html')
-                    with open(html_path, 'r', encoding='utf-8') as f:
-                        html_content = f.read()
-                    self.webview.load_html(html_content)
-            
-            class ChatApp(App):
-                def __init__(self, platform, **kwargs):
-                    super().__init__(**kwargs)
-                    self.platform = platform
-                
-                def build(self):
-                    self.title = "增强版聊天机器人"
-                    return ChatAppLayout(self.platform)
-                
-                def on_pause(self):
-                    return True
-                
-                def on_resume(self):
-                    pass
-            
-            # 启动本地HTTP服务器
-            self.start_http_server()
-            
-            # 启动Kivy应用
-            ChatApp(self).run()
-            
-        except ImportError as e:
-            print("错误: 缺少Android应用依赖")
-            print("请安装: pip install kivy")
-            print("或在Android环境中运行")
-    
-    def start_http_server(self):
-        """启动HTTP服务器（用于资源文件服务）"""
-        # 这里简化处理，实际Android应用中资源文件应该打包到APK中
-        # 或者使用Kivy的资源管理机制
-        print("Android平台: 资源文件服务已启用")
-
-其他需求：
+具体需求：
 platform_*需要彻底业务无关，比如endpoit的解析（即api路由）完全可以通过api_registry.py里的逻辑在platform_*中注册，这样当新增api时，我们只需要改api_registry和前端，不用改platform_*。
 chat_core里会根据我的输入，拼到聊天历史里作为提示词，调用deepseek api生成回复，新增到聊天历史。
 默认提示词存储在prompts/default_prompt.json里（json包含以下field：name,pre_prompt, pre_text, post_text，分别用来做提示词名字（无实际意义），主提示词，每次我说的话的前缀和后缀。）, 并且界面支持我选择/修改/新建/复制/删除/重命名不同的提示词文件。修改后，重新加载提示词和当前聊天历史，继续聊天。
@@ -317,29 +32,1449 @@ api_key一开始为空，在界面上添加按钮让我能够查看并修改api_
 检测deepseek回复的内容，如果出现了某个resource目录下的图片的文件名则在deepseek回复结束后，回复一张这个图片。
 增加针对resource目录下的图片的文档管理功能，并增加从其他目录下复制文件到resource目录下的功能。
 文档管理功能模块可以整合起来，和api_key管理，存档管理等功能合并(增删改查等功能都是通用的)。尽可能使代码简洁，并具有可读性。
-
 当api密钥为空时，弹框提示我请先设置api密钥，而不是在聊天窗口里显示一条回复。
 存档页面选中某一存档，新存档名称自动变成该存档名字。如果新存档名字已经存在，弹框提示我是否覆盖。
 所有的删除操作都需要弹框让我确认。
 资源管理对话框，增加图片预览窗口，选中某个文件就在预览窗口处显示图片预览。
 存档、资源、提示词、api密钥对话框均需要支持重命名操作。
-
-
 将保存/自动保存/加载/获取资源文件列表/复制文件到资源目录/删除文件/加载删除提示词等与构造聊天内容无关的功能从chat_core.py中剥离出来，形成一个新文件：storage_manager，专门负责这些事情。
 resource目录下的文件名需要支持中文文件名
 对话框布局需要优化一下，图片预览窗口位置太小了，而左侧有大量空白，请合理安排布局。
-
 把当前页面的title和<h1></h1>中的内容替换成当前选中的提示词文件的name字段。
 界面上新增记忆轮数的设定，这个设定用来控制每次最多把多少轮以前的聊天记录一起发给deepseek。
 让提示词、api_key、存档的管理页面里输入名字或显示名字时都带上后缀名，尤其是新建文件或重命名时，让我完整输入带有后缀名的文件名字
 在config文件夹下新增用户偏好文件，主要存储用户上一次使用习惯的设定，目前仅包括使用的提示词文件名，记忆轮数。如果文件不存在，先用默认值（记忆轮数6，提示词文件名default_prompt.json）新建一个user_preferences，然后再加载。
 把storage_manager.py文件中的方法整合缩减，比如重命名文件、删除文件等操作完全可以只写一个方法。
+所有交互和通信都需要支持中文。
+在android上运行前，用Buildozer打包成apk
 
-界面上的记忆轮数去掉设置按钮，失焦则更新。
-title和<h1></h1>中的内容不是要替换成提示词文件的文件名，而是提示词json的name字段
+
+以下是已经实现的文件内容：
+index.html:
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">增强版聊天机器人</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 id="mainTitle">增强版聊天机器人</h1>
+            <div class="controls">
+                <button id="apiKeyBtn">API密钥</button>
+                <button id="promptsBtn">提示词</button>
+                <button id="savesBtn">存档</button>
+                <button id="resourcesBtn">资源</button>
+                <div class="memory-control">
+                    <label for="memoryRounds">记忆轮数:</label>
+                    <input type="number" id="memoryRounds" min="0" max="20" value="6">
+                </div>
+                <button id="clearChatBtn">清空聊天</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="chat-container">
+                <div id="chatHistory" class="chat-history"></div>
+                
+                <div class="input-area">
+                    <div class="input-row">
+                        <input type="text" id="messageInput" placeholder="输入您的消息..." autocomplete="off">
+                        <button id="sendBtn">发送</button>
+                    </div>
+                    <div class="status-row">
+                        <span id="statusText">就绪</span>
+                        <span id="promptIndicator">默认提示词</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">模态框标题</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API密钥管理模态框内容 -->
+    <template id="apiKeyTemplate">
+        <div class="form-group">
+            <label for="apiKeyInput">DeepSeek API密钥:</label>
+            <input type="password" id="apiKeyInput" placeholder="输入您的API密钥">
+        </div>
+        <div class="form-group">
+            <button id="saveApiKey" class="btn-primary">保存密钥</button>
+            <button id="toggleApiKeyVisibility" class="btn-secondary">显示/隐藏</button>
+        </div>
+        <div class="status-info">
+            <p>状态: <span id="apiKeyStatus">未设置</span></p>
+            <p class="file-info">配置文件: api_key.json</p>
+        </div>
+    </template>
+
+    <!-- 提示词管理模态框内容 -->
+    <template id="promptsTemplate">
+        <div class="form-group">
+            <label>当前提示词:</label>
+            <select id="promptSelect">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="prePrompt">系统提示词:</label>
+            <textarea id="prePrompt" placeholder="输入系统提示词..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="preText">用户输入前缀:</label>
+            <input type="text" id="preText" placeholder="用户输入前缀">
+        </div>
+        <div class="form-group">
+            <label for="postText">用户输入后缀:</label>
+            <input type="text" id="postText" placeholder="用户输入后缀">
+        </div>
+        <div class="form-group">
+            <input type="text" id="newPromptName" placeholder="新提示词文件名 (如: 我的提示词.json)">
+            <div class="button-group">
+                <button id="savePrompt" class="btn-primary">保存修改</button>
+                <button id="newPrompt" class="btn-secondary">新建文件</button>
+                <button id="renamePrompt" class="btn-secondary">重命名当前</button>
+                <button id="deletePrompt" class="btn-danger">删除当前</button>
+            </div>
+        </div>
+        <div class="file-info">
+            <p>提示词文件存储在 prompts/ 目录下，格式为 .json 文件</p>
+        </div>
+    </template>
+
+    <!-- 存档管理模态框内容 -->
+    <template id="savesTemplate">
+        <div class="form-group">
+            <label>存档列表:</label>
+            <select id="savesSelect" size="10">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="text" id="newSaveName" placeholder="新存档文件名 (如: 我的存档.json)">
+            <div class="button-group">
+                <button id="saveChat" class="btn-primary">保存聊天</button>
+                <button id="loadChat" class="btn-secondary">加载选中</button>
+                <button id="renameSave" class="btn-secondary">重命名选中</button>
+                <button id="deleteSave" class="btn-danger">删除选中</button>
+            </div>
+        </div>
+        <div class="file-info">
+            <p>存档文件存储在 save/ 目录下，格式为 .json 文件</p>
+        </div>
+    </template>
+
+    <!-- 资源管理模态框内容 -->
+    <template id="resourcesTemplate">
+        <div class="resources-container">
+            <div class="resources-main">
+                <div class="resources-list-section">
+                    <label>资源文件列表:</label>
+                    <select id="resourcesSelect" size="12" class="resources-list">
+                        <option value="">加载中...</option>
+                    </select>
+                    <div class="resources-actions">
+                        <input type="text" id="newResourceName" placeholder="新资源文件名">
+                        <div class="action-buttons">
+                            <button id="renameResource" class="btn-secondary">重命名</button>
+                            <button id="deleteResource" class="btn-danger">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-section">
+                    <label>图片预览:</label>
+                    <div class="preview-area">
+                        <img id="resourcePreview" class="resource-preview" style="display: none;">
+                        <div class="preview-placeholder" id="previewPlaceholder">
+                            <span>选择文件预览</span>
+                            <p>支持的格式: JPG, PNG, GIF, BMP</p>
+                        </div>
+                    </div>
+                    <div class="upload-section">
+                        <input type="file" id="fileUpload" accept="image/*" style="display: none;">
+                        <button id="uploadResource" class="btn-primary">上传新文件</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="resources-footer">
+                <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>
+                <p class="file-info">资源文件存储在 resource/ 目录下</p>
+            </div>
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+app.js:
+// 前端应用主逻辑
+class ChatApp {
+    constructor() {
+        this.apiBase = '/api';
+        this.currentResponse = '';
+        this.isStreaming = false;
+        this.currentPromptName = "默认提示词"; // 存储当前提示词的name字段
+        
+        // 初始化
+        this.init();
+    }
+    
+    init() {
+        this.bindEvents();
+        this.loadChatHistory();
+        this.updateApiKeyStatus();
+        this.updatePromptIndicator();
+        this.loadMemoryRounds();
+    }
+    
+    bindEvents() {
+        // 发送消息
+        document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendMessage();
+            }
+        });
+        
+        // 控制按钮
+        document.getElementById('apiKeyBtn').addEventListener('click', () => this.showApiKeyModal());
+        document.getElementById('promptsBtn').addEventListener('click', () => this.showPromptsModal());
+        document.getElementById('savesBtn').addEventListener('click', () => this.showSavesModal());
+        document.getElementById('resourcesBtn').addEventListener('click', () => this.showResourcesModal());
+        document.getElementById('clearChatBtn').addEventListener('click', () => this.clearChat());
+        
+        // 模态框
+        document.getElementById('closeModal').addEventListener('click', () => this.hideModal());
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideModal();
+            }
+        });
+        
+        // 记忆轮数失焦更新
+        document.getElementById('memoryRounds').addEventListener('blur', () => this.setMemoryRounds());
+        document.getElementById('memoryRounds').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.setMemoryRounds();
+            }
+        });
+    }
+    
+    // API调用方法
+    async apiCall(endpoint, method = 'GET', data = null) {
+        try {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            
+            if (data && method !== 'GET') {
+                options.body = JSON.stringify(data);
+            }
+            
+            const response = await fetch(`${this.apiBase}/${endpoint}`, options);
+            return await response.json();
+        } catch (error) {
+            console.error('API调用失败:', error);
+            this.showStatus('网络错误: ' + error.message, 'error');
+            return { status: 'error', message: '网络请求失败' };
+        }
+    }
+    
+    // 流式聊天
+    async streamChat(message) {
+        this.isStreaming = true;
+        this.updateSendButton();
+        
+        try {
+            const response = await fetch(`${this.apiBase}/chat/stream`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message }),
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP错误! 状态码: ${response.status}`);
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            this.currentResponse = '';
+            
+            // 添加助手消息占位符
+            const messageId = this.addMessage('assistant', '');
+            
+            while (this.isStreaming) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                    break;
+                }
+                
+                // 直接解码数据，不需要处理chunked encoding
+                const chunk = decoder.decode(value, { stream: true });
+                this.currentResponse += chunk;
+                
+                // 更新消息内容
+                this.updateMessageContent(messageId, this.currentResponse);
+            }
+            
+            // 处理消息中的图片
+            this.processImagesInMessage(messageId, this.currentResponse);
+            
+        } catch (error) {
+            console.error('流式聊天错误:', error);
+            
+            // 检查是否是API密钥错误
+            if (error.message.includes('API密钥') || error.message.includes('请先设置API密钥')) {
+                alert('错误：请先设置API密钥');
+                this.showApiKeyModal();
+            } else {
+                this.addMessage('assistant', `错误: ${error.message}`);
+            }
+        } finally {
+            this.isStreaming = false;
+            this.updateSendButton();
+            this.showStatus('就绪');
+        }
+    }
+    
+    // 发送消息
+    async sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (!message || this.isStreaming) {
+            return;
+        }
+        
+        // 清空输入框
+        input.value = '';
+        
+        // 添加用户消息
+        this.addMessage('user', message);
+        
+        // 滚动到底部
+        this.scrollToBottom();
+        
+        // 显示发送状态
+        this.showStatus('正在思考...');
+        
+        // 发送消息
+        await this.streamChat(message);
+    }
+    
+    // 添加消息到聊天历史
+    addMessage(role, content) {
+        const chatHistory = document.getElementById('chatHistory');
+        const messageId = 'msg_' + Date.now();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}-message`;
+        messageDiv.id = messageId;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        if (role === 'assistant' && content === '') {
+            // 显示输入中状态
+            contentDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+        } else {
+            contentDiv.textContent = content;
+        }
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.textContent = new Date().toLocaleTimeString();
+        
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(timeDiv);
+        chatHistory.appendChild(messageDiv);
+        
+        this.scrollToBottom();
+        return messageId;
+    }
+    
+    // 更新消息内容
+    updateMessageContent(messageId, content) {
+        const messageDiv = document.getElementById(messageId);
+        if (messageDiv) {
+            const contentDiv = messageDiv.querySelector('.message-content');
+            
+            // 移除输入中状态
+            if (contentDiv.querySelector('.typing-indicator')) {
+                contentDiv.innerHTML = '';
+            }
+            
+            // 添加内容（支持简单的Markdown样式）
+            const formattedContent = this.formatMessage(content);
+            contentDiv.innerHTML = formattedContent;
+        }
+        
+        this.scrollToBottom();
+    }
+    
+    // 处理消息中的图片
+    processImagesInMessage(messageId, content) {
+        const messageDiv = document.getElementById(messageId);
+        if (!messageDiv) return;
+        
+        // 查找图片文件名模式
+        const imagePattern = /\[图片: ([^\]]+)\]/g;
+        const matches = [...content.matchAll(imagePattern)];
+        
+        matches.forEach(match => {
+            const filename = match[1];
+            const imageUrl = `/resource/${encodeURIComponent(filename)}`;
+            
+            // 创建图片元素
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = filename;
+            img.className = 'message-image';
+            img.onload = () => this.scrollToBottom();
+            
+            const contentDiv = messageDiv.querySelector('.message-content');
+            contentDiv.appendChild(img);
+            
+            // 移除图片标记
+            contentDiv.innerHTML = contentDiv.innerHTML.replace(match[0], '');
+        });
+    }
+    
+    // 格式化消息内容
+    formatMessage(content) {
+        // 简单的格式化处理，保持原有的换行但不添加额外换行
+        return content
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>');
+    }
+    
+    // 滚动到底部
+    scrollToBottom() {
+        const chatHistory = document.getElementById('chatHistory');
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+    
+    // 更新发送按钮状态
+    updateSendButton() {
+        const sendBtn = document.getElementById('sendBtn');
+        if (this.isStreaming) {
+            sendBtn.textContent = '发送中...';
+            sendBtn.disabled = true;
+        } else {
+            sendBtn.textContent = '发送';
+            sendBtn.disabled = false;
+        }
+    }
+    
+    // 显示状态信息
+    showStatus(message, type = 'info') {
+        const statusText = document.getElementById('statusText');
+        statusText.textContent = message;
+        
+        // 可以根据类型添加不同的样式
+        statusText.className = type;
+    }
+    
+    // 记忆轮数相关方法
+    async loadMemoryRounds() {
+        const result = await this.apiCall('chat/history');
+        if (result.status === 'success') {
+            document.getElementById('memoryRounds').value = result.memory_rounds || 6;
+        }
+    }
+    
+    async setMemoryRounds() {
+        const rounds = parseInt(document.getElementById('memoryRounds').value);
+        if (isNaN(rounds) || rounds < 0) {
+            alert('请输入有效的记忆轮数（0-20）');
+            return;
+        }
+        
+        const result = await this.apiCall('memory_rounds/set', 'POST', { memory_rounds: rounds });
+        if (result.status === 'success') {
+            this.showStatus(`记忆轮数已设置为: ${rounds}`);
+        } else {
+            alert('设置失败: ' + result.message);
+        }
+    }
+    
+    // 更新提示词指示器和标题
+    updatePromptIndicator() {
+        const indicator = document.getElementById('promptIndicator');
+        const title = document.getElementById('pageTitle');
+        const mainTitle = document.getElementById('mainTitle');
+        
+        if (indicator && title && mainTitle) {
+            indicator.textContent = this.currentPromptName;
+            title.textContent = `${this.currentPromptName} - 聊天机器人`;
+            mainTitle.textContent = this.currentPromptName;
+        }
+    }
+    
+    // 模态框管理
+    showModal(title, templateId) {
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = title;
+        modalBody.innerHTML = document.getElementById(templateId).innerHTML;
+        
+        modal.style.display = 'flex';
+        this.setupModalEvents(templateId);
+    }
+    
+    hideModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    
+    setupModalEvents(templateId) {
+        switch (templateId) {
+            case 'apiKeyTemplate':
+                this.setupApiKeyModal();
+                break;
+            case 'promptsTemplate':
+                this.setupPromptsModal();
+                break;
+            case 'savesTemplate':
+                this.setupSavesModal();
+                break;
+            case 'resourcesTemplate':
+                this.setupResourcesModal();
+                break;
+        }
+    }
+    
+    // API密钥管理
+    async showApiKeyModal() {
+        this.showModal('API密钥管理', 'apiKeyTemplate');
+        await this.updateApiKeyStatus();
+    }
+    
+    async setupApiKeyModal() {
+        // 加载当前API密钥状态
+        await this.updateApiKeyStatus();
+        
+        // 保存API密钥
+        document.getElementById('saveApiKey').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+            
+            const result = await this.apiCall('api_key/set', 'POST', { api_key: apiKey });
+            if (result.status === 'success') {
+                this.showStatus('API密钥已保存');
+                this.hideModal();
+                this.updateApiKeyStatus();
+            } else {
+                alert('保存失败: ' + result.message);
+            }
+        });
+        
+        // 显示/隐藏API密钥
+        document.getElementById('toggleApiKeyVisibility').addEventListener('click', () => {
+            const input = document.getElementById('apiKeyInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    }
+    
+    async updateApiKeyStatus() {
+        const result = await this.apiCall('api_key/status');
+        if (result.status === 'success') {
+            const statusElement = document.getElementById('apiKeyStatus');
+            if (statusElement) {
+                statusElement.textContent = result.has_api_key ? '已设置' : '未设置';
+                statusElement.className = result.has_api_key ? 'status-ok' : 'status-error';
+            }
+            
+            // 更新输入框
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            if (apiKeyInput) {
+                apiKeyInput.value = result.api_key_set || '';
+            }
+        }
+    }
+    
+    // 提示词管理
+    async showPromptsModal() {
+        this.showModal('提示词管理', 'promptsTemplate');
+        await this.loadPrompts();
+    }
+    
+    async setupPromptsModal() {
+        await this.loadPrompts();
+        
+        // 切换提示词
+        document.getElementById('promptSelect').addEventListener('change', async (e) => {
+            const promptName = e.target.value;
+            if (promptName) {
+                const result = await this.apiCall('prompt/set', 'POST', { prompt_name: promptName });
+                if (result.status === 'success') {
+                    this.showStatus('提示词已切换');
+                    this.updatePromptIndicator();
+                    this.loadPromptConfig();
+                } else {
+                    alert('切换失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 保存修改到当前文件
+        document.getElementById('savePrompt').addEventListener('click', async () => {
+            const select = document.getElementById('promptSelect');
+            const currentPrompt = select.value;
+            
+            if (!currentPrompt) {
+                alert('请先选择或创建一个提示词');
+                return;
+            }
+            
+            const promptData = {
+                name: this.currentPromptName, // 保存当前显示的name
+                pre_prompt: document.getElementById('prePrompt').value,
+                pre_text: document.getElementById('preText').value,
+                post_text: document.getElementById('postText').value
+            };
+            
+            const result = await this.apiCall('prompt/save', 'POST', {
+                prompt_name: currentPrompt,
+                prompt_data: promptData
+            });
+            
+            if (result.status === 'success') {
+                this.showStatus('提示词已保存');
+                this.loadPrompts();
+            } else {
+                alert('保存失败: ' + result.message);
+            }
+        });
+        
+        // 新建提示词文件
+        document.getElementById('newPrompt').addEventListener('click', async () => {
+            const newName = document.getElementById('newPromptName').value.trim();
+            if (!newName) {
+                alert('请输入新提示词文件名');
+                return;
+            }
+            
+            // 确保文件名有.json后缀
+            const fileName = newName.endsWith('.json') ? newName : newName + '.json';
+            
+            const promptData = {
+                name: newName.replace('.json', ''), // 使用文件名作为name
+                pre_prompt: document.getElementById('prePrompt').value,
+                pre_text: document.getElementById('preText').value,
+                post_text: document.getElementById('postText').value
+            };
+            
+            const result = await this.apiCall('prompt/save', 'POST', {
+                prompt_name: fileName,
+                prompt_data: promptData
+            });
+            
+            if (result.status === 'success') {
+                this.showStatus('新提示词已创建');
+                this.loadPrompts();
+                document.getElementById('newPromptName').value = '';
+                
+                // 自动切换到新创建的提示词
+                const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: fileName });
+                if (switchResult.status === 'success') {
+                    this.updatePromptIndicator();
+                }
+            } else {
+                alert('创建失败: ' + result.message);
+            }
+        });
+        
+        // 删除提示词
+        document.getElementById('deletePrompt').addEventListener('click', async () => {
+            const select = document.getElementById('promptSelect');
+            const promptName = select.value;
+            
+            if (!promptName) {
+                alert('请选择要删除的提示词');
+                return;
+            }
+            
+            if (promptName === 'default_prompt.json') {
+                alert('不能删除默认提示词');
+                return;
+            }
+            
+            if (confirm(`确定要删除提示词 "${promptName}" 吗？`)) {
+                const result = await this.apiCall('prompt/delete', 'POST', { prompt_name: promptName });
+                if (result.status === 'success') {
+                    this.showStatus('提示词已删除');
+                    this.loadPrompts();
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 重命名提示词
+        document.getElementById('renamePrompt').addEventListener('click', async () => {
+            const select = document.getElementById('promptSelect');
+            const oldName = select.value;
+            const newName = document.getElementById('newPromptName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的提示词');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的提示词文件名');
+                return;
+            }
+            
+            if (oldName === 'default_prompt.json') {
+                alert('不能重命名默认提示词');
+                return;
+            }
+            
+            // 确保新文件名有.json后缀
+            const fileName = newName.endsWith('.json') ? newName : newName + '.json';
+            
+            if (confirm(`确定要将提示词 "${oldName}" 重命名为 "${fileName}" 吗？`)) {
+                const result = await this.apiCall('prompt/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: fileName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('提示词已重命名');
+                    this.loadPrompts();
+                    document.getElementById('newPromptName').value = '';
+                } else {
+                    alert('重命名失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 加载当前提示词配置
+        this.loadPromptConfig();
+    }
+    
+    async loadPrompts() {
+        const result = await this.apiCall('prompts');
+        if (result.status === 'success') {
+            const select = document.getElementById('promptSelect');
+            select.innerHTML = '';
+            
+            result.prompts.forEach(prompt => {
+                const option = document.createElement('option');
+                option.value = prompt;
+                option.textContent = prompt;
+                if (prompt === result.current_prompt) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            
+            // 更新标题
+            this.updateTitles(result.current_config);
+        }
+    }
+    
+    async loadPromptConfig() {
+        const result = await this.apiCall('prompts');
+        if (result.status === 'success') {
+            document.getElementById('prePrompt').value = result.current_config.pre_prompt || '';
+            document.getElementById('preText').value = result.current_config.pre_text || '';
+            document.getElementById('postText').value = result.current_config.post_text || '';
+            
+            // 更新标题和当前提示词名称
+            this.updateTitles(result.current_config);
+        }
+    }
+    
+    updateTitles(promptConfig) {
+        // 使用提示词配置中的name字段
+        this.currentPromptName = promptConfig.name || '默认提示词';
+        this.updatePromptIndicator();
+    }
+    
+    // 存档管理
+    async showSavesModal() {
+        this.showModal('存档管理', 'savesTemplate');
+        await this.loadSaves();
+    }
+    
+    async setupSavesModal() {
+        await this.loadSaves();
+        
+        // 存档选择事件 - 自动填充名称
+        document.getElementById('savesSelect').addEventListener('change', (e) => {
+            const saveName = e.target.value;
+            if (saveName) {
+                document.getElementById('newSaveName').value = saveName;
+            }
+        });
+        
+        // 保存聊天
+        document.getElementById('saveChat').addEventListener('click', async () => {
+            let saveName = document.getElementById('newSaveName').value.trim();
+            if (!saveName) {
+                alert('请输入存档文件名');
+                return;
+            }
+            
+            // 确保文件名有.json后缀
+            saveName = saveName.endsWith('.json') ? saveName : saveName + '.json';
+            
+            // 先尝试保存，如果已存在会返回exists状态
+            const result = await this.apiCall('save', 'POST', { filename: saveName });
+            
+            if (result.status === 'exists') {
+                // 存档已存在，询问是否覆盖
+                if (confirm(`存档"${saveName}"已存在，是否覆盖？`)) {
+                    const forceResult = await this.apiCall('save/force', 'POST', { filename: saveName });
+                    if (forceResult.status === 'success') {
+                        this.showStatus('聊天已保存（覆盖）');
+                        this.loadSaves();
+                    } else {
+                        alert('保存失败: ' + forceResult.message);
+                    }
+                }
+            } else if (result.status === 'success') {
+                this.showStatus('聊天已保存');
+                this.loadSaves();
+            } else {
+                alert('保存失败: ' + result.message);
+            }
+        });
+        
+        // 加载聊天
+        document.getElementById('loadChat').addEventListener('click', async () => {
+            const select = document.getElementById('savesSelect');
+            const saveName = select.value;
+            
+            if (!saveName) {
+                alert('请选择要加载的存档');
+                return;
+            }
+            
+            if (confirm(`确定要加载存档 "${saveName}" 吗？当前聊天将被覆盖。`)) {
+                const result = await this.apiCall('save/load', 'POST', { filename: saveName });
+                if (result.status === 'success') {
+                    this.showStatus('聊天已加载');
+                    this.hideModal();
+                    this.loadChatHistory();
+                    this.loadMemoryRounds();
+                } else {
+                    alert('加载失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 删除存档
+        document.getElementById('deleteSave').addEventListener('click', async () => {
+            const select = document.getElementById('savesSelect');
+            const saveName = select.value;
+            
+            if (!saveName) {
+                alert('请选择要删除的存档');
+                return;
+            }
+            
+            if (confirm(`确定要删除存档 "${saveName}" 吗？`)) {
+                const result = await this.apiCall('save/delete', 'POST', { filename: saveName });
+                if (result.status === 'success') {
+                    this.showStatus('存档已删除');
+                    this.loadSaves();
+                    document.getElementById('newSaveName').value = '';
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 重命名存档
+        document.getElementById('renameSave').addEventListener('click', async () => {
+            const select = document.getElementById('savesSelect');
+            const oldName = select.value;
+            let newName = document.getElementById('newSaveName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的存档');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的存档文件名');
+                return;
+            }
+            
+            // 确保新文件名有.json后缀
+            newName = newName.endsWith('.json') ? newName : newName + '.json';
+            
+            if (confirm(`确定要将存档 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('save/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: newName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('存档已重命名');
+                    this.loadSaves();
+                    document.getElementById('newSaveName').value = '';
+                } else {
+                    alert('重命名失败: ' + result.message);
+                }
+            }
+        });
+    }
+    
+    async loadSaves() {
+        const result = await this.apiCall('saves');
+        if (result.status === 'success') {
+            const select = document.getElementById('savesSelect');
+            select.innerHTML = '';
+            
+            result.saves.forEach(save => {
+                const option = document.createElement('option');
+                option.value = save;
+                option.textContent = save;
+                select.appendChild(option);
+            });
+        }
+    }
+    
+    // 资源管理
+    async showResourcesModal() {
+        this.showModal('资源管理', 'resourcesTemplate');
+        await this.loadResources();
+    }
+    
+    async setupResourcesModal() {
+        await this.loadResources();
+        
+        // 资源选择事件 - 显示预览
+        document.getElementById('resourcesSelect').addEventListener('change', (e) => {
+            const filename = e.target.value;
+            const preview = document.getElementById('resourcePreview');
+            
+            if (filename && this.isImageFile(filename)) {
+                preview.src = `/resource/${encodeURIComponent(filename)}`;
+                preview.style.display = 'block';
+                document.getElementById('previewPlaceholder').style.display = 'none';
+            } else {
+                preview.style.display = 'none';
+                document.getElementById('previewPlaceholder').style.display = 'flex';
+            }
+        });
+        
+        // 上传文件
+        document.getElementById('uploadResource').addEventListener('click', () => {
+            document.getElementById('fileUpload').click();
+        });
+        
+        document.getElementById('fileUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 这里需要实现文件上传逻辑
+            alert('文件上传功能需要在服务器端实现特殊处理');
+        });
+        
+        // 删除资源
+        document.getElementById('deleteResource').addEventListener('click', async () => {
+            const select = document.getElementById('resourcesSelect');
+            const filename = select.value;
+            
+            if (!filename) {
+                alert('请选择要删除的资源文件');
+                return;
+            }
+            
+            if (confirm(`确定要删除资源文件 "${filename}" 吗？`)) {
+                const result = await this.apiCall('resource/delete', 'POST', { filename: filename });
+                if (result.status === 'success') {
+                    this.showStatus('资源文件已删除');
+                    this.loadResources();
+                    document.getElementById('resourcePreview').style.display = 'none';
+                    document.getElementById('previewPlaceholder').style.display = 'flex';
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            }
+        });
+        
+        // 重命名资源
+        document.getElementById('renameResource').addEventListener('click', async () => {
+            const select = document.getElementById('resourcesSelect');
+            const oldName = select.value;
+            const newName = document.getElementById('newResourceName').value.trim();
+            
+            if (!oldName) {
+                alert('请选择要重命名的资源文件');
+                return;
+            }
+            
+            if (!newName) {
+                alert('请输入新的资源文件名称');
+                return;
+            }
+            
+            if (confirm(`确定要将资源文件 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('resource/rename', 'POST', {
+                    old_name: oldName,
+                    new_name: newName
+                });
+                
+                if (result.status === 'success') {
+                    this.showStatus('资源文件已重命名');
+                    this.loadResources();
+                    document.getElementById('newResourceName').value = '';
+                    document.getElementById('resourcePreview').style.display = 'none';
+                    document.getElementById('previewPlaceholder').style.display = 'flex';
+                } else {
+                    alert('重命名失败: ' + result.message);
+                }
+            }
+        });
+    }
+    
+    isImageFile(filename) {
+        return filename.toLowerCase().match(/\.(jpg|jpeg|png|gif|bmp)$/);
+    }
+    
+    async loadResources() {
+        const result = await this.apiCall('resources');
+        if (result.status === 'success') {
+            const select = document.getElementById('resourcesSelect');
+            select.innerHTML = '';
+            
+            result.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                select.appendChild(option);
+            });
+        }
+    }
+    
+    // 聊天历史管理
+    async loadChatHistory() {
+        const result = await this.apiCall('chat/history');
+        if (result.status === 'success') {
+            const chatHistory = document.getElementById('chatHistory');
+            chatHistory.innerHTML = '';
+            
+            result.chat_history.forEach(msg => {
+                this.addMessage(msg.role, msg.content);
+            });
+            
+            this.scrollToBottom();
+        }
+    }
+    
+    async clearChat() {
+        if (confirm('确定要清空聊天记录吗？')) {
+            const result = await this.apiCall('chat/clear', 'POST');
+            if (result.status === 'success') {
+                this.showStatus('聊天已清空');
+                this.loadChatHistory();
+            } else {
+                alert('清空失败: ' + result.message);
+            }
+        }
+    }
+}
+
+// 初始化应用
+document.addEventListener('DOMContentLoaded', () => {
+    window.chatApp = new ChatApp();
+});
+
+main.py:
+#!/usr/bin/env python3
+"""
+统一入口文件
+支持PC网页服务器和Android应用
+"""
+import argparse
+
+# 检测运行环境
+def is_android():
+    """检测是否在Android环境中运行"""
+    try:
+        import kivy
+        from kivy.utils import platform
+        return platform == 'android'
+    except ImportError:
+        return False
 
 
-chat_core.py中的两个函数改成这样：
+def main():
+    """主函数"""
+    parser = argparse.ArgumentParser(description='增强版聊天应用')
+    parser.add_argument('--mode', choices=['web', 'android', 'auto'], default='auto',
+                       help='运行模式: web=网页服务器, android=Android应用, auto=自动检测')
+    
+    args = parser.parse_args()
+    
+    # 确定运行模式
+    if args.mode == 'auto':
+        if is_android():
+            mode = 'android'
+        else:
+            mode = 'web'
+    else:
+        mode = args.mode
+    
+    print(f"运行模式: {mode}")
+    
+    # 导入核心逻辑
+    from chat_core import ChatBot
+    
+    # 创建聊天机器人实例
+    chat_bot = ChatBot()
+    
+    # 启动对应模式
+    if mode == 'web':
+        from platform_web import WebPlatform
+        platform = WebPlatform(chat_bot)
+        platform.start()
+    elif mode == 'android':
+        from platform_android import AndroidPlatform
+        platform = AndroidPlatform(chat_bot)
+        platform.start()
+    else:
+        print("错误: 未知的运行模式")
+
+
+if __name__ == '__main__':
+    main()
+
+storage_manager.py:
+#!/usr/bin/env python3
+"""
+存储管理器
+专门负责文件存储、自动保存、资源管理等功能
+"""
+import os
+import json
+import shutil
+from typing import List, Dict, Any
+import logging
+
+# 设置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('StorageManager')
+
+
+class StorageManager:
+    """存储管理器类"""
+    
+    def __init__(self):
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.ensure_directories()
+    
+    def ensure_directories(self):
+        """确保必要的目录存在"""
+        directories = ['config', 'prompts', 'save', 'resource', 'frontend']
+        for dir_name in directories:
+            dir_path = os.path.join(self.base_dir, dir_name)
+            os.makedirs(dir_path, exist_ok=True)
+    
+    # ===== 通用文件操作 =====
+    def _read_json_file(self, filepath: str) -> Dict[str, Any]:
+        """读取JSON文件"""
+        try:
+            if os.path.exists(filepath):
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return {}
+        except Exception as e:
+            logger.error(f"读取文件失败 {filepath}: {str(e)}")
+            return {}
+    
+    def _write_json_file(self, filepath: str, data: Dict[str, Any]) -> bool:
+        """写入JSON文件"""
+        try:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            return True
+        except Exception as e:
+            logger.error(f"写入文件失败 {filepath}: {str(e)}")
+            return False
+    
+    def _delete_file(self, filepath: str) -> bool:
+        """删除文件"""
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"删除文件失败 {filepath}: {str(e)}")
+            return False
+    
+    def _rename_file(self, old_path: str, new_path: str) -> bool:
+        """重命名文件"""
+        try:
+            if os.path.exists(old_path) and not os.path.exists(new_path):
+                os.rename(old_path, new_path)
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"重命名文件失败 {old_path} -> {new_path}: {str(e)}")
+            return False
+    
+    def _list_files(self, directory: str, extension: str = None) -> List[str]:
+        """列出目录中的文件"""
+        try:
+            files = []
+            if os.path.exists(directory):
+                for file in os.listdir(directory):
+                    if extension is None or file.endswith(extension):
+                        files.append(file)
+            return sorted(files)
+        except Exception as e:
+            logger.error(f"列出文件失败 {directory}: {str(e)}")
+            return []
+    
+    # ===== 配置管理 =====
+    def load_config(self) -> Dict[str, Any]:
+        """加载配置"""
+        config_path = os.path.join(self.base_dir, 'config', 'api_key.json')
+        return self._read_json_file(config_path)
+    
+    def save_config(self, config: Dict[str, Any]) -> bool:
+        """保存配置"""
+        config_path = os.path.join(self.base_dir, 'config', 'api_key.json')
+        return self._write_json_file(config_path, config)
+    
+    # ===== 提示词管理 =====
+    def load_prompt(self, prompt_name: str) -> Dict[str, Any]:
+        """加载提示词配置"""
+        prompt_path = os.path.join(self.base_dir, 'prompts', prompt_name)
+        prompt_data = self._read_json_file(prompt_path)
+        
+        if not prompt_data:
+            logger.error(f"无法加载提示词文件: {prompt_path}")
+        
+        return prompt_data
+    
+    def save_prompt(self, prompt_name: str, prompt_data: Dict[str, Any]) -> bool:
+        """保存提示词配置"""
+        prompt_path = os.path.join(self.base_dir, 'prompts', prompt_name)
+        return self._write_json_file(prompt_path, prompt_data)
+    
+    def delete_prompt(self, prompt_name: str) -> bool:
+        """删除提示词配置"""
+        prompt_path = os.path.join(self.base_dir, 'prompts', prompt_name)
+        return self._delete_file(prompt_path)
+    
+    def rename_prompt(self, old_name: str, new_name: str) -> bool:
+        """重命名提示词"""
+        old_path = os.path.join(self.base_dir, 'prompts', old_name)
+        new_path = os.path.join(self.base_dir, 'prompts', new_name)
+        return self._rename_file(old_path, new_path)
+    
+    def get_available_prompts(self) -> List[str]:
+        """获取所有可用的提示词"""
+        return self._list_files(os.path.join(self.base_dir, 'prompts'), '.json')
+    
+    # ===== 存档管理 =====
+    def save_chat(self, filename: str, chat_data: Dict[str, Any]) -> bool:
+        """保存聊天记录"""
+        save_path = os.path.join(self.base_dir, 'save', filename)
+        return self._write_json_file(save_path, chat_data)
+    
+    def load_chat(self, filename: str) -> Dict[str, Any]:
+        """加载聊天记录"""
+        save_path = os.path.join(self.base_dir, 'save', filename)
+        return self._read_json_file(save_path)
+    
+    def delete_chat(self, filename: str) -> bool:
+        """删除聊天记录"""
+        save_path = os.path.join(self.base_dir, 'save', filename)
+        return self._delete_file(save_path)
+    
+    def rename_chat(self, old_name: str, new_name: str) -> bool:
+        """重命名聊天记录"""
+        old_path = os.path.join(self.base_dir, 'save', old_name)
+        new_path = os.path.join(self.base_dir, 'save', new_name)
+        return self._rename_file(old_path, new_path)
+    
+    def get_saved_chats(self) -> List[str]:
+        """获取所有保存的聊天记录"""
+        return self._list_files(os.path.join(self.base_dir, 'save'), '.json')
+    
+    def auto_save(self, chat_data: Dict[str, Any]) -> bool:
+        """自动保存，保留最近5次存档"""
+        try:
+            save_dir = os.path.join(self.base_dir, 'save')
+            
+            # 删除最旧的存档
+            old_save = os.path.join(save_dir, 'autosave_5.json')
+            self._delete_file(old_save)
+            
+            # 重命名现有存档
+            for i in range(4, 0, -1):
+                old_name = os.path.join(save_dir, f'autosave_{i}.json')
+                new_name = os.path.join(save_dir, f'autosave_{i+1}.json')
+                self._rename_file(old_name, new_name)
+            
+            # 重命名当前autosave
+            current_autosave = os.path.join(save_dir, 'autosave.json')
+            if os.path.exists(current_autosave):
+                self._rename_file(current_autosave, os.path.join(save_dir, 'autosave_1.json'))
+            
+            # 创建新的autosave
+            return self.save_chat('autosave.json', chat_data)
+            
+        except Exception as e:
+            logger.error(f"自动保存失败: {str(e)}")
+            return False
+    
+    def load_auto_save(self) -> Dict[str, Any]:
+        """加载自动保存"""
+        return self.load_chat('autosave.json')
+    
+    # ===== 资源文件管理 =====
+    def get_resource_files(self) -> List[str]:
+        """获取资源文件列表"""
+        return self._list_files(os.path.join(self.base_dir, 'resource'))
+    
+    def copy_to_resource(self, source_path: str, filename: str) -> bool:
+        """复制文件到资源目录"""
+        try:
+            resource_dir = os.path.join(self.base_dir, 'resource')
+            dest_path = os.path.join(resource_dir, filename)
+            shutil.copy2(source_path, dest_path)
+            return True
+        except Exception as e:
+            logger.error(f"复制文件失败: {str(e)}")
+            return False
+    
+    def delete_resource(self, filename: str) -> bool:
+        """删除资源文件"""
+        file_path = os.path.join(self.base_dir, 'resource', filename)
+        return self._delete_file(file_path)
+    
+    def rename_resource(self, old_name: str, new_name: str) -> bool:
+        """重命名资源文件"""
+        old_path = os.path.join(self.base_dir, 'resource', old_name)
+        new_path = os.path.join(self.base_dir, 'resource', new_name)
+        return self._rename_file(old_path, new_path)
+    
+    def get_resource_path(self, filename: str) -> str:
+        """获取资源文件的完整路径"""
+        return os.path.join(self.base_dir, 'resource', filename)
+    
+    def resource_exists(self, filename: str) -> bool:
+        """检查资源文件是否存在"""
+        return os.path.exists(self.get_resource_path(filename))
+
+
+# 全局存储管理器实例
+storage_manager = StorageManager()
+
+chat_core.py:
+#!/usr/bin/env python3
+"""
+核心聊天逻辑
+只处理与DeepSeek API的交互和聊天历史管理
+"""
+import json
+import os
+import requests
+import re
+from typing import List, Dict, Any, Generator
+
+# 导入存储管理器
+from storage_manager import storage_manager
+
+
+class ChatBot:
+    """聊天机器人核心类"""
+    
+    def __init__(self):
+        self.chat_history = []
+        self.current_prompt = "default_prompt.json"  # 默认提示词文件
+        self.api_key = ""
+        self.base_url = "https://api.deepseek.com/v1/chat/completions"
+        self.memory_rounds = 6  # 默认记忆轮数
+        self.prompt_name = "默认提示词"  # 存储提示词的name字段
+        
+        # 加载配置和自动保存
+        self.load_config()
+        self.load_auto_save()
+    
+    def load_config(self):
+        """加载API密钥配置"""
+        config = storage_manager.load_config()
+        self.api_key = config.get('api_key', '')
+    
+    def save_config(self):
+        """保存API密钥配置"""
+        storage_manager.save_config({'api_key': self.api_key})
+    
+    def load_prompt(self, prompt_name: str) -> bool:
+        """加载提示词配置"""
+        try:
+            prompt_config = storage_manager.load_prompt(prompt_name)
+            if prompt_config:
+                self.prompt_config = prompt_config
+                self.current_prompt = prompt_name
+                # 更新提示词名称
+                self.prompt_name = prompt_config.get('name', prompt_name.replace('.json', ''))
+                return True
+            else:
+                # 如果加载失败，尝试加载默认提示词
+                if prompt_name != "default_prompt.json":
+                    return self.load_prompt("default_prompt.json")
+                return False
+        except Exception as e:
+            print(f"加载提示词失败: {str(e)}")
+            return False
+    
+    def get_available_prompts(self) -> List[str]:
+        """获取所有可用的提示词"""
+        return storage_manager.get_available_prompts()
+    
     def build_messages(self, user_input: str) -> List[Dict[str, str]]:
         """构建消息列表，考虑记忆轮数"""
         messages = []
@@ -445,11 +1580,1116 @@ chat_core.py中的两个函数改成这样：
             
         except Exception as e:
             raise Exception(f"聊天失败: {str(e)}")
+    
+    def detect_images_in_response(self, response: str) -> List[str]:
+        """检测回复中的图片文件名"""
+        image_files = []
+        resource_files = storage_manager.get_resource_files()
+        
+        for file in resource_files:
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                if file in response:
+                    image_files.append(file)
+        
+        return image_files
+    
+    def auto_save(self):
+        """自动保存聊天记录"""
+        chat_data = {
+            "chat_history": self.chat_history,
+            "prompt_name": self.current_prompt,
+            "memory_rounds": self.memory_rounds
+        }
+        storage_manager.auto_save(chat_data)
+    
+    def load_auto_save(self):
+        """加载自动保存"""
+        chat_data = storage_manager.load_auto_save()
+        if chat_data:
+            # 从autosave加载数据
+            self.chat_history = chat_data.get('chat_history', [])
+            self.memory_rounds = chat_data.get('memory_rounds', 6)
+            self.load_prompt(chat_data.get('prompt_name', 'default_prompt.json'))
+            return True
+        else:
+            # 如果autosave不存在，使用默认值
+            self.load_prompt("default_prompt.json")
+            self.memory_rounds = 6
+            return False
+    
+    def clear_chat(self):
+        """清空聊天记录"""
+        self.chat_history = []
+    
+    def set_memory_rounds(self, rounds: int):
+        """设置记忆轮数"""
+        self.memory_rounds = max(0, rounds)  # 确保非负
+        # 立即保存到autosave
+        self.auto_save()
 
-提示词页面需要让我能够编辑提示词json的name字段。
-刚打开页面的时候，<h1>里显示的是“默认提示词”，而不是从autosave文件里加载出来的提示词json的name字段内容。请分析为什么会这样并给出解决方案。
+api_registry.py:
+#!/usr/bin/env python3
+"""
+API路由注册中心
+统一管理所有API端点，实现业务逻辑与平台解耦
+"""
+import os
+import json
+from typing import Dict, Any, Callable, Optional, Tuple
+
+# 导入存储管理器
+from storage_manager import storage_manager
 
 
-完整输出每个文件的内容。
-所有交互和通信都需要支持中文。
-在android上运行前，用Buildozer打包成apk
+class APIRegistry:
+    """API注册中心"""
+    
+    def __init__(self):
+        self.routes = {}
+        self.static_routes = {}
+    
+    def register_route(self, endpoint: str, method: str, handler: Callable):
+        """注册API路由"""
+        key = f"{method.upper()}_{endpoint}"
+        self.routes[key] = handler
+    
+    def register_static_route(self, route: str, directory: str):
+        """注册静态文件路由"""
+        self.static_routes[route] = directory
+    
+    def handle_request(self, endpoint: str, method: str, data: Any = None) -> Dict[str, Any]:
+        """处理API请求"""
+        key = f"{method.upper()}_{endpoint}"
+        
+        if key in self.routes:
+            try:
+                return self.routes[key](data)
+            except Exception as e:
+                return {"status": "error", "message": f"处理请求时出错: {str(e)}"}
+        else:
+            return {"status": "error", "message": f"未找到接口: {endpoint}"}
+    
+    def get_static_route(self, path: str) -> Tuple[Optional[str], str]:
+        """获取静态文件路由"""
+        # 精确匹配
+        if path in self.static_routes:
+            return self.static_routes[path], ""
+        
+        # 前缀匹配
+        for route, directory in self.static_routes.items():
+            if path.startswith(route):
+                relative_path = path[len(route):].lstrip('/')
+                return directory, relative_path
+        
+        return None, ""
+
+
+# 全局API注册中心实例
+api_registry = APIRegistry()
+
+
+def register_chat_apis(chat_bot):
+    """注册聊天相关API"""
+    
+    # 发送消息
+    def send_message(data):
+        if not data or 'message' not in data:
+            return {"status": "error", "message": "缺少消息内容"}
+        
+        # 这里返回流式处理标识，实际流式处理在前端实现
+        return {"status": "success", "message": "消息已发送"}
+    
+    # 获取聊天历史
+    def get_chat_history(data):
+        return {
+            "status": "success", 
+            "chat_history": chat_bot.chat_history,
+            "current_prompt": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds,
+            "prompt_name": chat_bot.prompt_name  # 返回提示词名称
+        }
+    
+    # 清空聊天
+    def clear_chat(data):
+        chat_bot.clear_chat()
+        # 清空后立即保存
+        chat_bot.auto_save()
+        return {"status": "success", "message": "聊天已清空"}
+    
+    # 获取API密钥状态
+    def get_api_key_status(data):
+        return {
+            "status": "success", 
+            "has_api_key": bool(chat_bot.api_key),
+            "api_key_set": chat_bot.api_key != ""
+        }
+    
+    # 设置API密钥
+    def set_api_key(data):
+        if not data or 'api_key' not in data:
+            return {"status": "error", "message": "缺少API密钥"}
+        
+        chat_bot.api_key = data['api_key']
+        chat_bot.save_config()
+        return {"status": "success", "message": "API密钥已保存"}
+    
+    # 获取提示词列表
+    def get_prompts(data):
+        prompts = chat_bot.get_available_prompts()
+        current_prompt = chat_bot.current_prompt
+        current_config = chat_bot.prompt_config
+        
+        return {
+            "status": "success",
+            "prompts": prompts,
+            "current_prompt": current_prompt,
+            "current_config": current_config
+        }
+    
+    # 设置当前提示词
+    def set_prompt(data):
+        if not data or 'prompt_name' not in data:
+            return {"status": "error", "message": "缺少提示词名称"}
+        
+        success = chat_bot.load_prompt(data['prompt_name'])
+        if success:
+            # 切换提示词后立即保存
+            chat_bot.auto_save()
+            return {"status": "success", "message": f"已切换到提示词: {data['prompt_name']}"}
+        else:
+            return {"status": "error", "message": f"切换提示词失败: {data['prompt_name']}"}
+    
+    # 保存提示词
+    def save_prompt(data):
+        if not data or 'prompt_name' not in data or 'prompt_data' not in data:
+            return {"status": "error", "message": "缺少提示词数据"}
+        
+        success = storage_manager.save_prompt(data['prompt_name'], data['prompt_data'])
+        if success:
+            return {"status": "success", "message": f"提示词已保存: {data['prompt_name']}"}
+        else:
+            return {"status": "error", "message": f"保存提示词失败: {data['prompt_name']}"}
+    
+    # 删除提示词
+    def delete_prompt(data):
+        if not data or 'prompt_name' not in data:
+            return {"status": "error", "message": "缺少提示词名称"}
+        
+        success = storage_manager.delete_prompt(data['prompt_name'])
+        if success:
+            # 如果删除的是当前提示词，切换到默认提示词
+            if chat_bot.current_prompt == data['prompt_name']:
+                chat_bot.load_prompt("default_prompt.json")
+                chat_bot.auto_save()
+            return {"status": "success", "message": f"提示词已删除: {data['prompt_name']}"}
+        else:
+            return {"status": "error", "message": f"删除提示词失败: {data['prompt_name']}"}
+    
+    # 重命名提示词
+    def rename_prompt(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = storage_manager.rename_prompt(data['old_name'], data['new_name'])
+        if success:
+            # 如果重命名的是当前提示词，更新当前提示词
+            if chat_bot.current_prompt == data['old_name']:
+                chat_bot.current_prompt = data['new_name']
+                chat_bot.auto_save()
+            return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名提示词失败"}
+    
+    # 获取存档列表
+    def get_saves(data):
+        saves = storage_manager.get_saved_chats()
+        return {"status": "success", "saves": saves}
+    
+    # 保存聊天
+    def save_chat(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        # 检查文件是否已存在
+        saves = storage_manager.get_saved_chats()
+        if data['filename'] in saves:
+            return {"status": "exists", "message": f"存档已存在: {data['filename']}"}
+        
+        chat_data = {
+            "chat_history": chat_bot.chat_history,
+            "prompt_name": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds
+        }
+        
+        success = storage_manager.save_chat(data['filename'], chat_data)
+        if success:
+            return {"status": "success", "message": f"聊天已保存: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"保存聊天失败: {data['filename']}"}
+    
+    # 强制保存聊天（覆盖）
+    def force_save_chat(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        chat_data = {
+            "chat_history": chat_bot.chat_history,
+            "prompt_name": chat_bot.current_prompt,
+            "memory_rounds": chat_bot.memory_rounds
+        }
+        
+        success = storage_manager.save_chat(data['filename'], chat_data)
+        if success:
+            return {"status": "success", "message": f"聊天已保存: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"保存聊天失败: {data['filename']}"}
+    
+    # 加载聊天
+    def load_chat(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        chat_data = storage_manager.load_chat(data['filename'])
+        if chat_data:
+            chat_bot.chat_history = chat_data.get('chat_history', [])
+            chat_bot.memory_rounds = chat_data.get('memory_rounds', 6)
+            chat_bot.load_prompt(chat_data.get('prompt_name', 'default_prompt.json'))
+            return {"status": "success", "message": f"聊天已加载: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"加载聊天失败: {data['filename']}"}
+    
+    # 删除聊天
+    def delete_chat(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        success = storage_manager.delete_chat(data['filename'])
+        if success:
+            return {"status": "success", "message": f"聊天已删除: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"删除聊天失败: {data['filename']}"}
+    
+    # 重命名聊天
+    def rename_chat(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = storage_manager.rename_chat(data['old_name'], data['new_name'])
+        if success:
+            return {"status": "success", "message": f"聊天已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名聊天失败"}
+    
+    # 获取资源文件
+    def get_resources(data):
+        files = storage_manager.get_resource_files()
+        return {"status": "success", "files": files}
+    
+    # 删除资源文件
+    def delete_resource(data):
+        if not data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件名"}
+        
+        success = storage_manager.delete_resource(data['filename'])
+        if success:
+            return {"status": "success", "message": f"资源文件已删除: {data['filename']}"}
+        else:
+            return {"status": "error", "message": f"删除资源文件失败: {data['filename']}"}
+    
+    # 重命名资源文件
+    def rename_resource(data):
+        if not data or 'old_name' not in data or 'new_name' not in data:
+            return {"status": "error", "message": "缺少重命名参数"}
+        
+        success = storage_manager.rename_resource(data['old_name'], data['new_name'])
+        if success:
+            return {"status": "success", "message": f"资源文件已重命名: {data['old_name']} -> {data['new_name']}"}
+        else:
+            return {"status": "error", "message": f"重命名资源文件失败"}
+    
+    # 设置记忆轮数
+    def set_memory_rounds(data):
+        if not data or 'memory_rounds' not in data:
+            return {"status": "error", "message": "缺少记忆轮数参数"}
+        
+        try:
+            rounds = int(data['memory_rounds'])
+            chat_bot.set_memory_rounds(rounds)
+            return {"status": "success", "message": f"记忆轮数已设置为: {rounds}"}
+        except ValueError:
+            return {"status": "error", "message": "记忆轮数必须是整数"}
+    
+    # 流式聊天（特殊处理）
+    def stream_chat(data):
+        if not data or 'message' not in data:
+            return {"status": "error", "message": "缺少消息内容"}
+        
+        # 这个API由平台特殊处理，不通过标准路由
+        return {"status": "stream", "message": data['message']}
+    
+    # 注册所有API路由
+    api_registry.register_route('chat', 'POST', send_message)
+    api_registry.register_route('chat/history', 'GET', get_chat_history)
+    api_registry.register_route('chat/clear', 'POST', clear_chat)
+    api_registry.register_route('api_key/status', 'GET', get_api_key_status)
+    api_registry.register_route('api_key/set', 'POST', set_api_key)
+    api_registry.register_route('prompts', 'GET', get_prompts)
+    api_registry.register_route('prompt/set', 'POST', set_prompt)
+    api_registry.register_route('prompt/save', 'POST', save_prompt)
+    api_registry.register_route('prompt/delete', 'POST', delete_prompt)
+    api_registry.register_route('prompt/rename', 'POST', rename_prompt)
+    api_registry.register_route('saves', 'GET', get_saves)
+    api_registry.register_route('save', 'POST', save_chat)
+    api_registry.register_route('save/force', 'POST', force_save_chat)
+    api_registry.register_route('save/load', 'POST', load_chat)
+    api_registry.register_route('save/delete', 'POST', delete_chat)
+    api_registry.register_route('save/rename', 'POST', rename_chat)
+    api_registry.register_route('resources', 'GET', get_resources)
+    api_registry.register_route('resource/delete', 'POST', delete_resource)
+    api_registry.register_route('resource/rename', 'POST', rename_resource)
+    api_registry.register_route('memory_rounds/set', 'POST', set_memory_rounds)
+    api_registry.register_route('chat/stream', 'POST', stream_chat)
+    
+    # 注册静态文件路由
+    api_registry.register_static_route('/', 'frontend')
+    api_registry.register_static_route('/resource', 'resource')
+
+style.css:
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 头部样式 */
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.header h1 {
+    text-align: center;
+    color: #4a5568;
+    margin-bottom: 15px;
+    font-size: 2.2em;
+    font-weight: 300;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.controls button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 主内容区域 */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 聊天历史区域 */
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 60vh;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    background: #f8fafc;
+}
+
+.message {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 5px;
+}
+
+.assistant-message {
+    background: #e2e8f0;
+    color: #2d3748;
+    margin-right: auto;
+    border-bottom-left-radius: 5px;
+}
+
+.message-content {
+    line-height: 1.5;
+}
+
+.message-time {
+    font-size: 0.8em;
+    opacity: 0.7;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* 输入区域 */
+.input-area {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 15px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 25px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#messageInput:focus {
+    border-color: #667eea;
+}
+
+#sendBtn {
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+#sendBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+#sendBtn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #718096;
+}
+
+#promptIndicator {
+    background: #edf2f7;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+/* 模态框样式 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #718096;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #2d3748;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group select[size] {
+    height: auto;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.status-info {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+    }
+    
+    .controls {
+        flex-direction: column;
+    }
+    
+    .controls button {
+        width: 100%;
+    }
+    
+    .message {
+        max-width: 95%;
+    }
+    
+    .input-row {
+        flex-direction: column;
+    }
+    
+    #sendBtn {
+        width: 100%;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+}
+
+/* 滚动条样式 */
+.chat-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 加载动画 */
+.typing-indicator {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #e2e8f0;
+    border-radius: 15px;
+    border-bottom-left-radius: 5px;
+}
+
+.typing-dots {
+    display: inline-block;
+}
+
+.typing-dots span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #718096;
+    margin: 0 2px;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* 图片消息样式 */
+.message-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 10px;
+    margin-top: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 资源预览样式 */
+.preview-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.resources-list {
+    flex: 1;
+    min-height: 200px;
+}
+
+.preview-area {
+    flex: 1;
+    min-height: 200px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+}
+
+.resource-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+}
+
+.preview-placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* 状态指示器 */
+.status-ok {
+    color: #48bb78;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #f56565;
+    font-weight: bold;
+}
+
+/* 表单组布局优化 */
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-group > * {
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group button {
+    flex: 0 1 auto;
+}
+
+/* 资源管理对话框优化样式 */
+.resources-container {
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.resources-main {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 400px;
+}
+
+.resources-list-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 250px;
+}
+
+.resources-list {
+    flex: 1;
+    min-height: 200px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.resources-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.resource-input {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-buttons button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.preview-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+}
+
+.preview-area {
+    flex: 1;
+    border: 2px dashed #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    margin-bottom: 15px;
+    min-height: 250px;
+}
+
+.resource-preview {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.preview-placeholder {
+    color: #a0aec0;
+    text-align: center;
+    padding: 20px;
+}
+
+.preview-placeholder span {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.preview-placeholder p {
+    font-size: 12px;
+    margin: 0;
+    opacity: 0.7;
+}
+
+.upload-section {
+    text-align: center;
+}
+
+.upload-section button {
+    width: 100%;
+    padding: 12px;
+}
+
+.resources-footer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.resources-footer p {
+    margin: 0;
+    font-size: 12px;
+    color: #718096;
+}
+
+/* 模态框内容区域优化 */
+.modal-content {
+    max-width: 700px;
+    width: 90%;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* 通用表单布局优化 */
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* 响应式设计优化 */
+@media (max-width: 768px) {
+    .resources-main {
+        flex-direction: column;
+    }
+    
+    .resources-list-section,
+    .preview-section {
+        min-width: auto;
+    }
+    
+    .preview-area {
+        min-height: 200px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+}
+
+/* 按钮组优化 */
+.button-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 14px;
+}
+
+/* 状态指示器 */
+.status-ok {
+    color: #48bb78;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #f56565;
+    font-weight: bold;
+}
+
+/* 记忆轮数控制样式 */
+.memory-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.memory-control label {
+    font-size: 14px;
+    color: #4a5568;
+    margin: 0;
+}
+
+#memoryRounds {
+    width: 50px;
+    padding: 5px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* 文件信息样式 */
+.file-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.file-info p {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #718096;
+}
+
+.file-info p:first-child {
+    margin-top: 0;
+}
+
+.file-info p:last-child {
+    margin-bottom: 0;
+}
+
+platform_android.py和platform_web.py文件与业务无关，主要实现的是分别针对android和pc web创建本地网站服务。你应该不需要关注。
+
+它现在有个bug，就是当界面刚打开时，<h1>里的内容显示的是默认值而不是从autosave里加载出来的prompt_json中的name字段，请分析为什么会出现这个bug，然后帮我修复。
+updateApiKeyStatus里apiKeyInput.value = result.api_key_set || '';这里需要改成真实密钥（这个密钥保密性没必要很好）
+app.js中的代码是否可以更简洁更可读一些？比如各个小对话框的功能都差不多，是否可以整合？注意尽量避免在js内写大段的html代码
+同时html和css的代码也需要简洁一些。
+编辑提示词的界面直接让我编辑整段json，app.js内也不要再拆分解析提示词json，最多提取一下json的name字段。编辑时就一个文本框，里面是格式化好的json，让我直接改json。提示词json可能会有更多冗余的字段，完整保存。后端使用提示词的的时候也不要再拆分存储，直接把提示词json当作一个dict来使用，例如：在chat_core.py中，去掉self.prompt_name，改为调用self.prompt_config.get(“name”, “默认名字”)。 尽量保持对原代码的最小修改，不要额外引入包。
+请把修改后的每个文件完整输出，确保代码能够同时支持android apk（将使用buildozer打包）和pc web

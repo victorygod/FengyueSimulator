@@ -66,7 +66,6 @@ def register_chat_apis(chat_bot):
         if not data or 'message' not in data:
             return {"status": "error", "message": "缺少消息内容"}
         
-        # 这里返回流式处理标识，实际流式处理在前端实现
         return {"status": "success", "message": "消息已发送"}
     
     # 获取聊天历史
@@ -76,13 +75,12 @@ def register_chat_apis(chat_bot):
             "chat_history": chat_bot.chat_history,
             "current_prompt": chat_bot.current_prompt,
             "memory_rounds": chat_bot.memory_rounds,
-            "prompt_name": chat_bot.prompt_name  # 返回提示词名称
+            "current_config": chat_bot.prompt_config  # 返回完整的提示词配置
         }
     
     # 清空聊天
     def clear_chat(data):
         chat_bot.clear_chat()
-        # 清空后立即保存
         chat_bot.auto_save()
         return {"status": "success", "message": "聊天已清空"}
     
@@ -91,7 +89,7 @@ def register_chat_apis(chat_bot):
         return {
             "status": "success", 
             "has_api_key": bool(chat_bot.api_key),
-            "api_key_set": chat_bot.api_key != ""
+            "api_key": chat_bot.api_key  # 返回真实API密钥
         }
     
     # 设置API密钥
@@ -123,7 +121,6 @@ def register_chat_apis(chat_bot):
         
         success = chat_bot.load_prompt(data['prompt_name'])
         if success:
-            # 切换提示词后立即保存
             chat_bot.auto_save()
             return {"status": "success", "message": f"已切换到提示词: {data['prompt_name']}"}
         else:
@@ -136,6 +133,9 @@ def register_chat_apis(chat_bot):
         
         success = storage_manager.save_prompt(data['prompt_name'], data['prompt_data'])
         if success:
+            # 如果保存的是当前提示词，重新加载
+            if chat_bot.current_prompt == data['prompt_name']:
+                chat_bot.load_prompt(data['prompt_name'])
             return {"status": "success", "message": f"提示词已保存: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"保存提示词失败: {data['prompt_name']}"}
@@ -147,7 +147,6 @@ def register_chat_apis(chat_bot):
         
         success = storage_manager.delete_prompt(data['prompt_name'])
         if success:
-            # 如果删除的是当前提示词，切换到默认提示词
             if chat_bot.current_prompt == data['prompt_name']:
                 chat_bot.load_prompt("default_prompt.json")
                 chat_bot.auto_save()
@@ -162,7 +161,6 @@ def register_chat_apis(chat_bot):
         
         success = storage_manager.rename_prompt(data['old_name'], data['new_name'])
         if success:
-            # 如果重命名的是当前提示词，更新当前提示词
             if chat_bot.current_prompt == data['old_name']:
                 chat_bot.current_prompt = data['new_name']
                 chat_bot.auto_save()
@@ -180,7 +178,6 @@ def register_chat_apis(chat_bot):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        # 检查文件是否已存在
         saves = storage_manager.get_saved_chats()
         if data['filename'] in saves:
             return {"status": "exists", "message": f"存档已存在: {data['filename']}"}
@@ -294,7 +291,6 @@ def register_chat_apis(chat_bot):
         if not data or 'message' not in data:
             return {"status": "error", "message": "缺少消息内容"}
         
-        # 这个API由平台特殊处理，不通过标准路由
         return {"status": "stream", "message": data['message']}
     
     # 注册所有API路由
