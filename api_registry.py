@@ -81,7 +81,7 @@ def register_chat_apis(chat_bot):
     # 清空聊天
     def clear_chat(data):
         chat_bot.clear_chat()
-        chat_bot.auto_save()
+        # chat_bot.auto_save()
         return {"status": "success", "message": "聊天已清空"}
     
     # 获取API密钥状态
@@ -121,7 +121,7 @@ def register_chat_apis(chat_bot):
         
         success = chat_bot.load_prompt(data['prompt_name'])
         if success:
-            chat_bot.auto_save()
+            # chat_bot.auto_save()
             return {"status": "success", "message": f"已切换到提示词: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"切换提示词失败: {data['prompt_name']}"}
@@ -149,7 +149,7 @@ def register_chat_apis(chat_bot):
         if success:
             if chat_bot.current_prompt == data['prompt_name']:
                 chat_bot.load_prompt("default_prompt.json")
-                chat_bot.auto_save()
+                # chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已删除: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"删除提示词失败: {data['prompt_name']}"}
@@ -163,7 +163,7 @@ def register_chat_apis(chat_bot):
         if success:
             if chat_bot.current_prompt == data['old_name']:
                 chat_bot.current_prompt = data['new_name']
-                chat_bot.auto_save()
+                # chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
             return {"status": "error", "message": f"重命名提示词失败"}

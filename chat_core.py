@@ -205,4 +205,4 @@ class ChatBot:
     def set_memory_rounds(self, rounds: int):
         """设置记忆轮数"""
         self.memory_rounds = max(0, rounds)
-        self.auto_save()
+        # self.auto_save()
