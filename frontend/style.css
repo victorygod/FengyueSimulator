@@ -21,11 +21,15 @@
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+html, body {
+    height: 100%;
+    overflow: hidden; /* 防止整个页面滚动 */
+}
+
 body {
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
     background: var(--light-bg);
     color: var(--text-primary);
-    min-height: 100vh;
     line-height: 1.5;
 }
 
@@ -33,9 +37,10 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
-    min-height: 100vh;
+    height: 100vh; /* 使用视口高度 */
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* 防止容器滚动 */
 }
 
 /* Metro风格头部 */
@@ -45,6 +50,7 @@ body {
     margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: none;
+    flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .header h1 {
@@ -116,6 +122,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* 防止主区域滚动 */
 }
 
 .chat-container {
@@ -124,13 +131,13 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 600px;
+    overflow: hidden; /* 防止聊天容器滚动 */
 }
 
 /* 聊天历史区域 - Metro风格 */
 .chat-history {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* 只有聊天历史区域可以滚动 */
     padding: 0;
     background: var(--surface);
     display: flex;
@@ -148,6 +155,7 @@ body {
     max-width: 70%;
     word-wrap: break-word;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0; /* 防止消息被压缩 */
 }
 
 .user-message .message-content {
@@ -171,6 +179,7 @@ body {
     border-bottom: 1px solid var(--border-color);
     word-wrap: break-word;
     width: 100%;
+    flex-shrink: 0; /* 防止消息被压缩 */
 }
 
 .assistant-message .message-content {
@@ -195,6 +204,7 @@ body {
     border-top: 1px solid var(--border-color);
     padding: 20px;
     background: var(--surface);
+    flex-shrink: 0; /* 防止输入区域被压缩 */
 }
 
 .input-row {
@@ -246,6 +256,7 @@ body {
     align-items: center;
     z-index: 1000;
     padding: 20px;
+    overflow: auto; /* 允许模态框内部滚动 */
 }
 
 .metro-modal {
@@ -412,6 +423,7 @@ body {
     border-radius: 2px;
     padding: 4px;
     margin-bottom: 12px;
+    overflow-y: auto; /* CG列表内部滚动 */
 }
 
 .cg-actions {
@@ -535,7 +547,6 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     display: block;
 }
-
 
 /* 字段提示样式 */
 .field-hint {
@@ -763,6 +774,7 @@ body {
 @media (max-width: 767px) {
     .container {
         padding: 12px;
+        height: 100vh; /* 保持全高 */
     }
     
     .header {
@@ -867,6 +879,19 @@ body {
 }
 
 .modal-body::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.cg-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cg-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+}
+
+.cg-list::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 3px;
 }
