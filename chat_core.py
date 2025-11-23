@@ -165,9 +165,9 @@ class ChatBot:
     def detect_images_in_response(self, response: str) -> List[str]:
         """检测回复中的图片文件名"""
         image_files = []
-        resource_files = storage_manager.get_resource_files()
+        cg_files = storage_manager.get_cg_files()
         
-        for file in resource_files:
+        for file in cg_files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 if file in response:
                     image_files.append(file)
