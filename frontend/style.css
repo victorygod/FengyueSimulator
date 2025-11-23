@@ -384,28 +384,28 @@ body {
     font-weight: 600;
 }
 
-/* 资源管理样式 */
-.resources-container {
+/* CG管理样式 */
+.cg-container {
     display: flex;
     flex-direction: column;
     height: 500px;
 }
 
-.resources-main {
+.cg-main {
     display: flex;
     gap: 24px;
     flex: 1;
     min-height: 400px;
 }
 
-.resources-list-section {
+.cg-list-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 280px;
 }
 
-.resources-list {
+.cg-list {
     flex: 1;
     min-height: 200px;
     border: 2px solid var(--border-color);
@@ -414,7 +414,7 @@ body {
     margin-bottom: 12px;
 }
 
-.resources-actions {
+.cg-actions {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -473,11 +473,26 @@ body {
     width: 100%;
 }
 
-.resources-footer {
+.cg-footer {
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid var(--border-color);
     text-align: center;
+}
+
+/* 重命名对话框样式 */
+.rename-dialog {
+    max-width: 500px;
+}
+
+.rename-dialog .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.rename-dialog .button-group .metro-btn {
+    flex: 1;
 }
 
 /* 记忆轮数控制 */
@@ -663,6 +678,23 @@ body {
     }
 }
 
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .cg-main {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .cg-list-section,
+    .preview-section {
+        min-width: auto;
+    }
+    
+    .metro-preview {
+        min-height: 200px;
+    }
+}
+
 /* 响应式设计 - 平板 */
 @media (max-width: 1023px) and (min-width: 768px) {
     .container {
@@ -678,7 +710,7 @@ body {
         margin: 10px 20px;
     }
     
-    .resources-main {
+    .cg-main {
         gap: 20px;
     }
 }
@@ -741,12 +773,12 @@ body {
         padding: 20px;
     }
     
-    .resources-main {
+    .cg-main {
         flex-direction: column;
         gap: 16px;
     }
     
-    .resources-list-section,
+    .cg-list-section,
     .preview-section {
         min-width: auto;
     }

@@ -25,7 +25,7 @@ class ChatApp {
         document.getElementById('apiKeyBtn').addEventListener('click', () => this.showApiKeyModal());
         document.getElementById('promptsBtn').addEventListener('click', () => this.showPromptsModal());
         document.getElementById('savesBtn').addEventListener('click', () => this.showSavesModal());
-        document.getElementById('resourcesBtn').addEventListener('click', () => this.showResourcesModal());
+        document.getElementById('cgManageBtn').addEventListener('click', () => this.showCGModal());
         document.getElementById('clearChatBtn').addEventListener('click', () => this.clearChat());
         
         // 模态框
@@ -210,7 +210,6 @@ class ChatApp {
         });
     }
     
-    // 在ChatApp类中添加或修改formatMessage方法
     formatMessage(content) {
         // 创建一个安全的HTML解析函数
         const sanitizeHtml = (html) => {
@@ -234,24 +233,6 @@ class ChatApp {
             .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th))\s([^&]*)&gt;/g, '<$1 $3>');
 
         return formatted;
-    }
-
-    // 修改updateMessageContent方法，允许HTML内容
-    updateMessageContent(messageId, content) {
-        const messageDiv = document.getElementById(messageId);
-        if (messageDiv) {
-            const contentDiv = messageDiv.querySelector('.message-content');
-            
-            if (contentDiv.querySelector('.typing-indicator')) {
-                contentDiv.innerHTML = '';
-            }
-            
-            // 直接使用formatMessage处理的内容
-            const formattedContent = this.formatMessage(content);
-            contentDiv.innerHTML = formattedContent;
-        }
-        
-        this.scrollToBottom();
     }
     
     scrollToBottom() {
@@ -345,8 +326,8 @@ class ChatApp {
             case 'savesTemplate':
                 this.setupSavesModal();
                 break;
-            case 'resourcesTemplate':
-                this.setupResourcesModal();
+            case 'cgTemplate':
+                this.setupCGModal();
                 break;
         }
     }
@@ -718,18 +699,18 @@ class ChatApp {
         }
     }
     
-    // 资源管理
-    async showResourcesModal() {
-        this.showModal('资源管理', 'resourcesTemplate');
-        await this.loadResources();
+    // CG管理
+    async showCGModal() {
+        this.showModal('CG管理', 'cgTemplate');
+        await this.loadCG();
     }
-    
-    async setupResourcesModal() {
-        await this.loadResources();
+
+    async setupCGModal() {
+        await this.loadCG();
         
-        document.getElementById('resourcesSelect').addEventListener('change', (e) => {
+        document.getElementById('cgSelect').addEventListener('change', (e) => {
             const filename = e.target.value;
-            const preview = document.getElementById('resourcePreview');
+            const preview = document.getElementById('cgPreview');
             
             if (filename && this.isImageFile(filename)) {
                 preview.src = `/resource/${encodeURIComponent(filename)}`;
@@ -741,29 +722,61 @@ class ChatApp {
             }
         });
         
-        document.getElementById('uploadResource').addEventListener('click', () => {
+        document.getElementById('copyToCG').addEventListener('click', () => {
             document.getElementById('fileUpload').click();
         });
         
+        // 文件上传处理
         document.getElementById('fileUpload').addEventListener('change', async (e) => {
-            alert('文件上传功能需要在服务器端实现特殊处理');
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${this.apiBase}/cg/copy`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    if (result.file_exists) {
+                        // 文件已存在，显示包含重命名输入框的对话框
+                        await this.showFileExistsDialogWithRename(file.name, result.existing_files);
+                        return;
+                    }
+                    this.showStatus('文件已复制到CG目录');
+                    this.loadCG();
+                } else {
+                    alert('复制失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('复制文件失败:', error);
+                alert('复制文件失败: ' + error.message);
+            }
+            
+            // 清空文件输入
+            e.target.value = '';
         });
         
-        document.getElementById('deleteResource').addEventListener('click', async () => {
-            const select = document.getElementById('resourcesSelect');
+        document.getElementById('deleteCG').addEventListener('click', async () => {
+            const select = document.getElementById('cgSelect');
             const filename = select.value;
             
             if (!filename) {
-                alert('请选择要删除的资源文件');
+                alert('请选择要删除的CG文件');
                 return;
             }
             
-            if (confirm(`确定要删除资源文件 "${filename}" 吗？`)) {
-                const result = await this.apiCall('resource/delete', 'POST', { filename: filename });
+            if (confirm(`确定要删除CG文件 "${filename}" 吗？`)) {
+                const result = await this.apiCall('cg/delete', 'POST', { filename: filename });
                 if (result.status === 'success') {
-                    this.showStatus('资源文件已删除');
-                    this.loadResources();
-                    document.getElementById('resourcePreview').style.display = 'none';
+                    this.showStatus('CG文件已删除');
+                    this.loadCG();
+                    document.getElementById('cgPreview').style.display = 'none';
                     document.getElementById('previewPlaceholder').style.display = 'flex';
                 } else {
                     alert('删除失败: ' + result.message);
@@ -771,32 +784,32 @@ class ChatApp {
             }
         });
         
-        document.getElementById('renameResource').addEventListener('click', async () => {
-            const select = document.getElementById('resourcesSelect');
+        document.getElementById('renameCG').addEventListener('click', async () => {
+            const select = document.getElementById('cgSelect');
             const oldName = select.value;
-            const newName = document.getElementById('newResourceName').value.trim();
+            const newName = document.getElementById('newCGName').value.trim();
             
             if (!oldName) {
-                alert('请选择要重命名的资源文件');
+                alert('请选择要重命名的CG文件');
                 return;
             }
             
             if (!newName) {
-                alert('请输入新的资源文件名称');
+                alert('请输入新的CG文件名称');
                 return;
             }
             
-            if (confirm(`确定要将资源文件 "${oldName}" 重命名为 "${newName}" 吗？`)) {
-                const result = await this.apiCall('resource/rename', 'POST', {
+            if (confirm(`确定要将CG文件 "${oldName}" 重命名为 "${newName}" 吗？`)) {
+                const result = await this.apiCall('cg/rename', 'POST', {
                     old_name: oldName,
                     new_name: newName
                 });
                 
                 if (result.status === 'success') {
-                    this.showStatus('资源文件已重命名');
-                    this.loadResources();
-                    document.getElementById('newResourceName').value = '';
-                    document.getElementById('resourcePreview').style.display = 'none';
+                    this.showStatus('CG文件已重命名');
+                    this.loadCG();
+                    document.getElementById('newCGName').value = '';
+                    document.getElementById('cgPreview').style.display = 'none';
                     document.getElementById('previewPlaceholder').style.display = 'flex';
                 } else {
                     alert('重命名失败: ' + result.message);
@@ -804,15 +817,189 @@ class ChatApp {
             }
         });
     }
+
+    // 显示包含重命名输入框的文件存在对话框
+    async showFileExistsDialogWithRename(filename, existingFiles) {
+        return new Promise((resolve) => {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            modal.style.zIndex = '2000';
+            
+            // 生成唯一文件名
+            const uniqueName = this.generateUniqueFilename(filename, existingFiles);
+            
+            modal.innerHTML = `
+                <div class="modal-content metro-modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>文件已存在</h2>
+                        <button class="close-btn metro-close" id="closeRenameModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>文件 "<strong>${filename}</strong>" 在CG目录中已存在。</p>
+                        <p>请选择操作：</p>
+                        
+                        <div class="form-group">
+                            <label for="renameInput">重命名文件:</label>
+                            <input type="text" id="renameInput" value="${uniqueName}" class="metro-input">
+                        </div>
+                        
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button id="overwriteBtn" class="metro-btn danger" style="flex: 1;">覆盖原文件</button>
+                            <button id="renameBtn" class="metro-btn primary" style="flex: 1;">使用新名称</button>
+                            <button id="cancelBtn" class="metro-btn secondary" style="flex: 1;">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 绑定事件
+            const closeBtn = document.getElementById('closeRenameModal');
+            const overwriteBtn = document.getElementById('overwriteBtn');
+            const renameBtn = document.getElementById('renameBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const renameInput = document.getElementById('renameInput');
+            
+            const closeModal = (result) => {
+                document.body.removeChild(modal);
+                resolve(result);
+            };
+            
+            closeBtn.addEventListener('click', () => closeModal({ action: 'cancel' }));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal({ action: 'cancel' });
+            });
+            
+            overwriteBtn.addEventListener('click', () => closeModal({ 
+                action: 'overwrite',
+                filename: filename
+            }));
+            
+            renameBtn.addEventListener('click', () => {
+                const newName = renameInput.value.trim();
+                if (!newName) {
+                    alert('请输入文件名');
+                    return;
+                }
+                closeModal({ 
+                    action: 'rename',
+                    filename: newName
+                });
+            });
+            
+            cancelBtn.addEventListener('click', () => closeModal({ action: 'cancel' }));
+        }).then(async (result) => {
+            if (result.action === 'cancel') {
+                this.showStatus('操作已取消');
+                return;
+            }
+            
+            if (result.action === 'overwrite') {
+                // 覆盖文件
+                const fileInput = document.getElementById('fileUpload');
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch(`${this.apiBase}/cg/copy`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        this.showStatus('文件已覆盖');
+                        this.loadCG();
+                    } else {
+                        alert('覆盖失败: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('覆盖文件失败:', error);
+                    alert('覆盖文件失败: ' + error.message);
+                }
+            } else if (result.action === 'rename') {
+                // 使用新名称上传
+                const fileInput = document.getElementById('fileUpload');
+                const file = fileInput.files[0];
+                
+                // 检查新名称是否仍然存在
+                const cgListResult = await this.apiCall('cg/list');
+                if (cgListResult.status === 'success' && cgListResult.files.includes(result.filename)) {
+                    if (confirm(`文件 "${result.filename}" 仍然存在，是否覆盖？`)) {
+                        // 覆盖已存在的文件
+                        await this.uploadFileWithNewName(file, result.filename, true);
+                    } else {
+                        this.showStatus('操作已取消');
+                    }
+                } else {
+                    // 新名称不存在，直接上传
+                    await this.uploadFileWithNewName(file, result.filename, false);
+                }
+            }
+        });
+    }
+
+    // 生成唯一文件名
+    generateUniqueFilename(filename, existingFiles) {
+        const baseName = filename.substring(0, filename.lastIndexOf('.'));
+        const extension = filename.substring(filename.lastIndexOf('.'));
+        
+        let newName = filename;
+        let counter = 1;
+        
+        while (existingFiles.includes(newName)) {
+            newName = `${baseName}(${counter})${extension}`;
+            counter++;
+        }
+        
+        return newName;
+    }
+
+    // 使用新名称上传文件
+    async uploadFileWithNewName(file, newName, overwrite = false) {
+        const formData = new FormData();
+        
+        // 创建一个新的File对象，使用新名称
+        const newFile = new File([file], newName, { type: file.type });
+        formData.append('file', newFile);
+        
+        try {
+            const response = await fetch(`${this.apiBase}/cg/copy`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                if (overwrite) {
+                    this.showStatus(`文件已重命名为 "${newName}" 并覆盖`);
+                } else {
+                    this.showStatus(`文件已重命名为 "${newName}" 并复制到CG目录`);
+                }
+                this.loadCG();
+            } else {
+                alert('上传失败: ' + result.message);
+            }
+        } catch (error) {
+            console.error('上传失败:', error);
+            alert('上传失败: ' + error.message);
+        }
+    }
     
     isImageFile(filename) {
         return filename.toLowerCase().match(/\.(jpg|jpeg|png|gif|bmp)$/);
     }
     
-    async loadResources() {
-        const result = await this.apiCall('resources');
+    async loadCG() {
+        const result = await this.apiCall('cg/list');
         if (result.status === 'success') {
-            const select = document.getElementById('resourcesSelect');
+            const select = document.getElementById('cgSelect');
             select.innerHTML = '';
             
             result.files.forEach(file => {

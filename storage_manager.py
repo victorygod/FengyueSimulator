@@ -185,40 +185,49 @@ class StorageManager:
         """加载自动保存"""
         return self.load_chat('autosave.json')
     
-    # ===== 资源文件管理 =====
-    def get_resource_files(self) -> List[str]:
-        """获取资源文件列表"""
+    # ===== CG文件管理 =====
+    def get_cg_files(self) -> List[str]:
+        """获取CG文件列表"""
         return self._list_files(os.path.join(self.base_dir, 'resource'))
     
-    def copy_to_resource(self, source_path: str, filename: str) -> bool:
-        """复制文件到资源目录"""
+    def copy_to_cg(self, source_path: str, filename: str) -> bool:
+        """复制文件到CG目录"""
         try:
-            resource_dir = os.path.join(self.base_dir, 'resource')
-            dest_path = os.path.join(resource_dir, filename)
+            cg_dir = os.path.join(self.base_dir, 'resource')
+            dest_path = os.path.join(cg_dir, filename)
+            
+            # 确保目标目录存在
+            os.makedirs(cg_dir, exist_ok=True)
+            
+            # 如果目标文件已存在，直接覆盖（前端已经询问过用户）
+            if os.path.exists(dest_path):
+                os.remove(dest_path)
+            
             shutil.copy2(source_path, dest_path)
+            logger.info(f"文件已复制到CG目录: {filename}")
             return True
         except Exception as e:
             logger.error(f"复制文件失败: {str(e)}")
             return False
     
-    def delete_resource(self, filename: str) -> bool:
-        """删除资源文件"""
+    def delete_cg(self, filename: str) -> bool:
+        """删除CG文件"""
         file_path = os.path.join(self.base_dir, 'resource', filename)
         return self._delete_file(file_path)
     
-    def rename_resource(self, old_name: str, new_name: str) -> bool:
-        """重命名资源文件"""
+    def rename_cg(self, old_name: str, new_name: str) -> bool:
+        """重命名CG文件"""
         old_path = os.path.join(self.base_dir, 'resource', old_name)
         new_path = os.path.join(self.base_dir, 'resource', new_name)
         return self._rename_file(old_path, new_path)
     
-    def get_resource_path(self, filename: str) -> str:
-        """获取资源文件的完整路径"""
+    def get_cg_path(self, filename: str) -> str:
+        """获取CG文件的完整路径"""
         return os.path.join(self.base_dir, 'resource', filename)
     
-    def resource_exists(self, filename: str) -> bool:
-        """检查资源文件是否存在"""
-        return os.path.exists(self.get_resource_path(filename))
+    def cg_exists(self, filename: str) -> bool:
+        """检查CG文件是否存在"""
+        return os.path.exists(self.get_cg_path(filename))
 
 
 # 全局存储管理器实例

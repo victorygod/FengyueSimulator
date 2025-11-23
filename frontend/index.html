@@ -14,7 +14,7 @@
                 <button id="apiKeyBtn" class="metro-btn">API密钥</button>
                 <button id="promptsBtn" class="metro-btn">提示词</button>
                 <button id="savesBtn" class="metro-btn">存档</button>
-                <button id="resourcesBtn" class="metro-btn">资源</button>
+                <button id="cgManageBtn" class="metro-btn">CG管理</button>
                 <div class="memory-control">
                     <label for="memoryRounds">记忆轮数:</label>
                     <input type="number" id="memoryRounds" min="0" max="20" value="6">
@@ -118,28 +118,28 @@
         </div>
     </template>
 
-    <!-- 资源管理模态框内容 -->
-    <template id="resourcesTemplate">
-        <div class="resources-container">
-            <div class="resources-main">
-                <div class="resources-list-section">
-                    <label>资源文件列表:</label>
-                    <select id="resourcesSelect" size="12" class="resources-list metro-input">
+    <!-- CG管理模态框内容 -->
+    <template id="cgTemplate">
+        <div class="cg-container">
+            <div class="cg-main">
+                <div class="cg-list-section">
+                    <label>CG文件列表:</label>
+                    <select id="cgSelect" size="12" class="cg-list metro-input">
                         <option value="">加载中...</option>
                     </select>
-                    <div class="resources-actions">
-                        <input type="text" id="newResourceName" placeholder="新资源文件名" class="metro-input">
+                    <div class="cg-actions">
+                        <input type="text" id="newCGName" placeholder="新CG文件名" class="metro-input">
                         <div class="action-buttons">
-                            <button id="renameResource" class="metro-btn secondary">重命名</button>
-                            <button id="deleteResource" class="metro-btn danger">删除</button>
+                            <button id="renameCG" class="metro-btn secondary">重命名</button>
+                            <button id="deleteCG" class="metro-btn danger">删除</button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="preview-section">
-                    <label>图片预览:</label>
+                    <label>CG预览:</label>
                     <div class="preview-area metro-preview">
-                        <img id="resourcePreview" class="resource-preview" style="display: none;">
+                        <img id="cgPreview" class="resource-preview" style="display: none;">
                         <div class="preview-placeholder" id="previewPlaceholder">
                             <span>选择文件预览</span>
                             <p>支持的格式: JPG, PNG, GIF, BMP</p>
@@ -147,14 +147,14 @@
                     </div>
                     <div class="upload-section">
                         <input type="file" id="fileUpload" accept="image/*" style="display: none;">
-                        <button id="uploadResource" class="metro-btn primary">上传新文件</button>
+                        <button id="copyToCG" class="metro-btn primary">复制文件到CG目录</button>
                     </div>
                 </div>
             </div>
             
-            <div class="resources-footer metro-status">
-                <p>说明: 当AI回复中包含资源文件名时，会自动显示对应的图片</p>
-                <p class="file-info">资源文件存储在 resource/ 目录下</p>
+            <div class="cg-footer metro-status">
+                <p>说明: 当AI回复中包含CG文件名时，会自动显示对应的图片</p>
+                <p class="file-info">CG文件存储在 resource/ 目录下</p>
             </div>
         </div>
     </template>

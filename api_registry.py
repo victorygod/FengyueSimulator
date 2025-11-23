@@ -75,13 +75,13 @@ def register_chat_apis(chat_bot):
             "chat_history": chat_bot.chat_history,
             "current_prompt": chat_bot.current_prompt,
             "memory_rounds": chat_bot.memory_rounds,
-            "current_config": chat_bot.prompt_config  # 返回完整的提示词配置
+            "current_config": chat_bot.prompt_config
         }
     
     # 清空聊天
     def clear_chat(data):
         chat_bot.clear_chat()
-        # chat_bot.auto_save()
+        chat_bot.auto_save()
         return {"status": "success", "message": "聊天已清空"}
     
     # 获取API密钥状态
@@ -89,7 +89,7 @@ def register_chat_apis(chat_bot):
         return {
             "status": "success", 
             "has_api_key": bool(chat_bot.api_key),
-            "api_key": chat_bot.api_key  # 返回真实API密钥
+            "api_key": chat_bot.api_key
         }
     
     # 设置API密钥
@@ -121,7 +121,7 @@ def register_chat_apis(chat_bot):
         
         success = chat_bot.load_prompt(data['prompt_name'])
         if success:
-            # chat_bot.auto_save()
+            chat_bot.auto_save()
             return {"status": "success", "message": f"已切换到提示词: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"切换提示词失败: {data['prompt_name']}"}
@@ -149,7 +149,7 @@ def register_chat_apis(chat_bot):
         if success:
             if chat_bot.current_prompt == data['prompt_name']:
                 chat_bot.load_prompt("default_prompt.json")
-                # chat_bot.auto_save()
+                chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已删除: {data['prompt_name']}"}
         else:
             return {"status": "error", "message": f"删除提示词失败: {data['prompt_name']}"}
@@ -163,7 +163,7 @@ def register_chat_apis(chat_bot):
         if success:
             if chat_bot.current_prompt == data['old_name']:
                 chat_bot.current_prompt = data['new_name']
-                # chat_bot.auto_save()
+                chat_bot.auto_save()
             return {"status": "success", "message": f"提示词已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
             return {"status": "error", "message": f"重命名提示词失败"}
@@ -247,32 +247,56 @@ def register_chat_apis(chat_bot):
         else:
             return {"status": "error", "message": f"重命名聊天失败"}
     
-    # 获取资源文件
-    def get_resources(data):
-        files = storage_manager.get_resource_files()
+    # 获取CG文件列表
+    def get_cg_files(data):
+        files = storage_manager.get_cg_files()
         return {"status": "success", "files": files}
     
-    # 删除资源文件
-    def delete_resource(data):
+    # 复制文件到CG目录
+    def copy_to_cg(data):
+        if not data or 'temp_path' not in data or 'filename' not in data:
+            return {"status": "error", "message": "缺少文件数据"}
+        
+        # 检查文件是否已存在
+        file_exists = storage_manager.cg_exists(data['filename'])
+        
+        # 获取现有文件列表用于生成唯一文件名
+        existing_files = storage_manager.get_cg_files()
+        
+        # 调用存储管理器复制文件
+        success = storage_manager.copy_to_cg(data['temp_path'], data['filename'])
+        
+        if success:
+            return {
+                "status": "success", 
+                "message": f"文件 '{data['filename']}' 已复制到CG目录",
+                "file_exists": file_exists,
+                "existing_files": existing_files  # 返回现有文件列表
+            }
+        else:
+            return {"status": "error", "message": f"复制文件失败: {data['filename']}"}
+    
+    # 删除CG文件
+    def delete_cg(data):
         if not data or 'filename' not in data:
             return {"status": "error", "message": "缺少文件名"}
         
-        success = storage_manager.delete_resource(data['filename'])
+        success = storage_manager.delete_cg(data['filename'])
         if success:
-            return {"status": "success", "message": f"资源文件已删除: {data['filename']}"}
+            return {"status": "success", "message": f"CG文件已删除: {data['filename']}"}
         else:
-            return {"status": "error", "message": f"删除资源文件失败: {data['filename']}"}
+            return {"status": "error", "message": f"删除CG文件失败: {data['filename']}"}
     
-    # 重命名资源文件
-    def rename_resource(data):
+    # 重命名CG文件
+    def rename_cg(data):
         if not data or 'old_name' not in data or 'new_name' not in data:
             return {"status": "error", "message": "缺少重命名参数"}
         
-        success = storage_manager.rename_resource(data['old_name'], data['new_name'])
+        success = storage_manager.rename_cg(data['old_name'], data['new_name'])
         if success:
-            return {"status": "success", "message": f"资源文件已重命名: {data['old_name']} -> {data['new_name']}"}
+            return {"status": "success", "message": f"CG文件已重命名: {data['old_name']} -> {data['new_name']}"}
         else:
-            return {"status": "error", "message": f"重命名资源文件失败"}
+            return {"status": "error", "message": f"重命名CG文件失败"}
     
     # 设置记忆轮数
     def set_memory_rounds(data):
@@ -310,9 +334,10 @@ def register_chat_apis(chat_bot):
     api_registry.register_route('save/load', 'POST', load_chat)
     api_registry.register_route('save/delete', 'POST', delete_chat)
     api_registry.register_route('save/rename', 'POST', rename_chat)
-    api_registry.register_route('resources', 'GET', get_resources)
-    api_registry.register_route('resource/delete', 'POST', delete_resource)
-    api_registry.register_route('resource/rename', 'POST', rename_resource)
+    api_registry.register_route('cg/list', 'GET', get_cg_files)
+    api_registry.register_route('cg/copy', 'POST', copy_to_cg)
+    api_registry.register_route('cg/delete', 'POST', delete_cg)
+    api_registry.register_route('cg/rename', 'POST', rename_cg)
     api_registry.register_route('memory_rounds/set', 'POST', set_memory_rounds)
     api_registry.register_route('chat/stream', 'POST', stream_chat)
     
