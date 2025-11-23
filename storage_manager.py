@@ -30,21 +30,25 @@ class StorageManager:
     
     # ===== 通用文件操作 =====
     def _read_json_file(self, filepath: str) -> Dict[str, Any]:
-        """读取JSON文件"""
+        """读取JSON文件 - 支持包含转义字符的字符串"""
         try:
             if os.path.exists(filepath):
                 with open(filepath, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    content = f.read()
+                    # 直接使用json.loads，它会正确处理转义字符
+                    return json.loads(content)
             return {}
         except Exception as e:
             logger.error(f"读取文件失败 {filepath}: {str(e)}")
             return {}
-    
+        
     def _write_json_file(self, filepath: str, data: Dict[str, Any]) -> bool:
-        """写入JSON文件"""
+        """写入JSON文件 - 支持包含换行符的字符串"""
         try:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, 'w', encoding='utf-8') as f:
+                # 使用ensure_ascii=False来支持非ASCII字符
+                # indent=2 保持格式美观
                 json.dump(data, f, ensure_ascii=False, indent=2)
             return True
         except Exception as e:

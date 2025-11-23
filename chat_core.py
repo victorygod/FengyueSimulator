@@ -64,6 +64,7 @@ class ChatBot:
         # 添加系统提示词
         pre_prompt = self.prompt_config.get('pre_prompt', '')
         if pre_prompt:
+            # 不需要特殊处理，JSON解析时已经正确处理了换行符
             messages.append({
                 "role": "system",
                 "content": pre_prompt
@@ -90,7 +91,7 @@ class ChatBot:
         })
         
         return messages
-    
+        
     def stream_chat(self, user_input: str) -> Generator[str, None, None]:
         """流式聊天"""
         if not self.api_key:
