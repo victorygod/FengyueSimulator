@@ -42,16 +42,17 @@ def main():
     args = parser.parse_args()
     
     # 确定运行模式
-    if args.mode == 'auto':
-        if is_android():
-            mode = 'android'
-        elif is_ios():
-            mode = 'ios'
-        else:
-            mode = 'web'
-    else:
-        mode = args.mode
+    # if args.mode == 'auto':
+    #     if is_android():
+    #         mode = 'android'
+    #     elif is_ios():
+    #         mode = 'ios'
+    #     else:
+    #         mode = 'web'
+    # else:
+    #     mode = args.mode
     
+    mode = 'web'
     print(f"运行模式: {mode}")
     
     # 导入核心逻辑

@@ -210,12 +210,48 @@ class ChatApp {
         });
     }
     
+    // 在ChatApp类中添加或修改formatMessage方法
     formatMessage(content) {
-        return content
+        // 创建一个安全的HTML解析函数
+        const sanitizeHtml = (html) => {
+            const temp = document.createElement('div');
+            temp.textContent = html;
+            return temp.innerHTML;
+        };
+
+        // 保留HTML标签，但进行安全处理
+        let formatted = content
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>');
+
+        // 恢复一些安全的HTML标签
+        formatted = formatted
+            .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th))&gt;/g, '<$1>')
+            .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th))\s([^&]*)&gt;/g, '<$1 $3>');
+
+        return formatted;
+    }
+
+    // 修改updateMessageContent方法，允许HTML内容
+    updateMessageContent(messageId, content) {
+        const messageDiv = document.getElementById(messageId);
+        if (messageDiv) {
+            const contentDiv = messageDiv.querySelector('.message-content');
+            
+            if (contentDiv.querySelector('.typing-indicator')) {
+                contentDiv.innerHTML = '';
+            }
+            
+            // 直接使用formatMessage处理的内容
+            const formattedContent = this.formatMessage(content);
+            contentDiv.innerHTML = formattedContent;
+        }
+        
+        this.scrollToBottom();
     }
     
     scrollToBottom() {
