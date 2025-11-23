@@ -536,6 +536,50 @@ body {
     display: block;
 }
 
+
+/* 字段提示样式 */
+.field-hint {
+    background: var(--light-bg);
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.field-hint p {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.field-hint ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.field-hint li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.field-hint strong {
+    color: var(--primary-color);
+}
+
+/* 代码编辑器样式增强 */
+.code-editor {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    line-height: 1.4;
+    tab-size: 4;
+}
+
+/* 确保文本区域有足够的高度 */
+#promptJsonEditor {
+    min-height: 300px;
+    resize: vertical;
+}
+
 /* HTML内容样式 */
 .assistant-message .message-content h1,
 .assistant-message .message-content h2,

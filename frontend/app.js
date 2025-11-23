@@ -156,7 +156,7 @@ class ChatApp {
                 </div>
             `;
         } else {
-            contentDiv.textContent = content;
+            contentDiv.innerHTML = this.formatMessage(content);
         }
         
         const timeDiv = document.createElement('div');
@@ -414,8 +414,11 @@ class ChatApp {
             }
             
             try {
+                // 获取用户输入的JSON文本
                 const promptJson = document.getElementById('promptJsonEditor').value;
-                const promptData = JSON.parse(promptJson);
+                
+                // 使用自定义解析器处理包含换行的JSON
+                const promptData = this.parseJsonWithNewlines(promptJson);
                 
                 const result = await this.apiCall('prompt/save', 'POST', {
                     prompt_name: currentPrompt,
@@ -444,7 +447,7 @@ class ChatApp {
             
             try {
                 const promptJson = document.getElementById('promptJsonEditor').value;
-                const promptData = JSON.parse(promptJson);
+                const promptData = this.parseJsonWithNewlines(promptJson);
                 
                 const result = await this.apiCall('prompt/save', 'POST', {
                     prompt_name: fileName,
@@ -557,9 +560,53 @@ class ChatApp {
     async loadPromptConfig() {
         const result = await this.apiCall('prompts');
         if (result.status === 'success') {
-            document.getElementById('promptJsonEditor').value = JSON.stringify(result.current_config, null, 2);
+            // 将JSON对象转换为支持换行显示的格式
+            const formattedJson = this.formatJsonWithNewlines(result.current_config);
+            document.getElementById('promptJsonEditor').value = formattedJson;
             this.updateTitles(result.current_config);
         }
+    }
+
+    // 添加自定义JSON解析方法
+    parseJsonWithNewlines(jsonString) {
+        // 先预处理：将字符串中的换行符转义
+        let processedJson = jsonString.replace(/("([^"\\]|\\.)*")/g, (match) => {
+            // 只处理字符串内容，不处理键名
+            if (match.startsWith('"') && match.endsWith('"')) {
+                // 将字符串内的换行符转义为 \n
+                let inner = match.slice(1, -1);
+                inner = inner.replace(/\n/g, '\\n');
+                inner = inner.replace(/\r/g, '\\r');
+                inner = inner.replace(/\t/g, '\\t');
+                return '"' + inner + '"';
+            }
+            return match;
+        });
+        
+        // 现在可以安全地解析JSON
+        return JSON.parse(processedJson);
+    }
+
+    // 添加自定义JSON格式化方法
+    formatJsonWithNewlines(obj) {
+        // 先将对象转换为JSON字符串
+        let jsonString = JSON.stringify(obj, null, 2);
+        
+        // 将转义的换行符恢复为真正的换行符，只在字符串值中
+        jsonString = jsonString.replace(/("([^"\\]|\\.)*")/g, (match) => {
+            if (match.startsWith('"') && match.endsWith('"')) {
+                let inner = match.slice(1, -1);
+                // 恢复转义字符
+                inner = inner.replace(/\\n/g, '\n');
+                inner = inner.replace(/\\r/g, '\r');
+                inner = inner.replace(/\\t/g, '\t');
+                inner = inner.replace(/\\\\/g, '\\');
+                return '"' + inner + '"';
+            }
+            return match;
+        });
+        
+        return jsonString;
     }
     
     // 存档管理

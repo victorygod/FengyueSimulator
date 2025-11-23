@@ -80,6 +80,15 @@
         </div>
         <div class="form-group">
             <label for="promptJsonEditor">提示词配置JSON:</label>
+            <div class="field-hint">
+                <p><strong>使用说明：</strong></p>
+                <ul>
+                    <li>字符串字段支持真正的换行符和空格</li>
+                    <li>编辑时可以直接输入多行文本</li>
+                    <li>保存时会自动处理换行符的转义</li>
+                    <li>JSON格式的其他部分（键名、结构等）必须保持正确</li>
+                </ul>
+            </div>
             <textarea id="promptJsonEditor" placeholder="请输入完整的提示词配置JSON..." class="metro-input code-editor"></textarea>
         </div>
         <div class="form-group">
