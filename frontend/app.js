@@ -167,7 +167,6 @@ class ChatApp {
         messageDiv.appendChild(timeDiv);
         chatHistory.appendChild(messageDiv);
         
-        this.scrollToBottom();
         return messageId;
     }
     
@@ -184,7 +183,6 @@ class ChatApp {
             contentDiv.innerHTML = formattedContent;
         }
         
-        this.scrollToBottom();
     }
     
     processImagesInMessage(messageId, content) {
@@ -202,7 +200,6 @@ class ChatApp {
             img.src = imageUrl;
             img.alt = filename;
             img.className = 'message-image';
-            img.onload = () => this.scrollToBottom();
             
             const contentDiv = messageDiv.querySelector('.message-content');
             contentDiv.appendChild(img);

@@ -83,7 +83,7 @@ class ChatBot:
         # 添加当前用户输入
         pre_text = self.prompt_config.get('pre_text', '')
         post_text = self.prompt_config.get('post_text', '')
-        user_message = f"{pre_text}{user_input}{post_text}"
+        user_message = f"{pre_text}\n{user_input}\n{post_text}"
         
         messages.append({
             "role": "user",
@@ -206,4 +206,3 @@ class ChatBot:
     def set_memory_rounds(self, rounds: int):
         """设置记忆轮数"""
         self.memory_rounds = max(0, rounds)
-        # self.auto_save()
