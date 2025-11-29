@@ -4,7 +4,7 @@ class ChatApp {
         this.apiBase = '/api';
         this.currentResponse = '';
         this.isStreaming = false;
-        this.currentPromptName = "默认提示词";
+        this.currentPromptConfig = {};
         
         this.init();
     }
@@ -12,6 +12,7 @@ class ChatApp {
     init() {
         this.bindEvents();
         this.loadInitialData();
+        this.adjustControlsForMobile(); // 初始化时根据屏幕大小设置折叠状态
     }
     
     bindEvents() {
@@ -28,6 +29,9 @@ class ChatApp {
         document.getElementById('cgManageBtn').addEventListener('click', () => this.showCGModal());
         document.getElementById('clearChatBtn').addEventListener('click', () => this.clearChat());
         
+        // 折叠按钮
+        document.getElementById('toggleControls').addEventListener('click', () => this.toggleControls());
+
         // 模态框
         document.getElementById('closeModal').addEventListener('click', () => this.hideModal());
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
@@ -40,12 +44,27 @@ class ChatApp {
             if (e.key === 'Enter') this.setMemoryRounds();
         });
     }
+
+    // 添加折叠控制方法
+    toggleControls() {
+        const controlsPanel = document.getElementById('controlsPanel');
+        const toggleBtn = document.getElementById('toggleControls');
+        
+        controlsPanel.classList.toggle('collapsed');
+        
+        if (controlsPanel.classList.contains('collapsed')) {
+            toggleBtn.innerHTML = '☰ 显示控制面板';
+            toggleBtn.classList.remove('active');
+        } else {
+            toggleBtn.innerHTML = '✕ 隐藏控制面板';
+            toggleBtn.classList.add('active');
+        }
+    }
+
     
     async loadInitialData() {
         await this.loadChatHistory();
         await this.updateApiKeyStatus();
-        await this.loadMemoryRounds();
-        this.updatePromptIndicator();
     }
     
     // API调用方法
@@ -255,12 +274,12 @@ class ChatApp {
     }
     
     // 记忆轮数
-    async loadMemoryRounds() {
-        const result = await this.apiCall('chat/history');
-        if (result.status === 'success') {
-            document.getElementById('memoryRounds').value = result.memory_rounds || 6;
-        }
-    }
+    // async loadMemoryRounds() {
+    //     const result = await this.apiCall('chat/history');
+    //     if (result.status === 'success') {
+    //         document.getElementById('memoryRounds').value = result.memory_rounds || 6;
+    //     }
+    // }
     
     async setMemoryRounds() {
         const rounds = parseInt(document.getElementById('memoryRounds').value);
@@ -278,21 +297,20 @@ class ChatApp {
     }
     
     // 更新提示词指示器和标题
-    updatePromptIndicator() {
+    updatePromtConfig(promptConfig) {
+        this.currentPromptConfig = promptConfig;
         const indicator = document.getElementById('promptIndicator');
         const title = document.getElementById('pageTitle');
         const mainTitle = document.getElementById('mainTitle');
+        const builtInCssStyle = document.getElementById('builtInCssStyle');
         
         if (indicator && title && mainTitle) {
-            indicator.textContent = this.currentPromptName;
-            title.textContent = `${this.currentPromptName} - 聊天机器人`;
-            mainTitle.textContent = this.currentPromptName;
+            indicator.textContent = this.currentPromptConfig.name;
+            title.textContent = `${this.currentPromptConfig.name} - 聊天机器人`;
+            mainTitle.textContent = this.currentPromptConfig.name;
         }
-    }
-    
-    updateTitles(promptConfig) {
-        this.currentPromptName = promptConfig.name || '默认提示词';
-        this.updatePromptIndicator();
+        console.log('设置内置CSS:', this.currentPromptConfig.builtInCss); // 调试日志
+        builtInCssStyle.textContent = this.currentPromptConfig.builtInCss || "";
     }
     
     // 模态框管理
@@ -310,6 +328,23 @@ class ChatApp {
     
     hideModal() {
         document.getElementById('modalOverlay').style.display = 'none';
+        // 确保在移动设备上控制面板在模态框关闭后保持正确状态
+        this.adjustControlsForMobile();
+    }
+
+    // 添加响应式调整方法
+    adjustControlsForMobile() {
+        const controlsPanel = document.getElementById('controlsPanel');
+        const toggleBtn = document.getElementById('toggleControls');
+        
+        // 在移动设备上，默认折叠控制面板
+        if (window.innerWidth <= 767) {
+            if (!controlsPanel.classList.contains('collapsed')) {
+                controlsPanel.classList.add('collapsed');
+                toggleBtn.innerHTML = '☰ 显示控制面板';
+                toggleBtn.classList.remove('active');
+            }
+        }
     }
     
     setupModalEvents(templateId) {
@@ -393,8 +428,7 @@ class ChatApp {
                 const result = await this.apiCall('prompt/set', 'POST', { prompt_name: promptName });
                 if (result.status === 'success') {
                     this.showStatus('提示词已切换');
-                    this.updatePromptIndicator();
-                    this.loadPromptConfig();
+                    this.loadPrompts();
                 } else {
                     alert('切换失败: ' + result.message);
                 }
@@ -458,7 +492,7 @@ class ChatApp {
                     
                     const switchResult = await this.apiCall('prompt/set', 'POST', { prompt_name: fileName });
                     if (switchResult.status === 'success') {
-                        this.updatePromptIndicator();
+                        alert('创建成功');
                     }
                 } else {
                     alert('创建失败: ' + result.message);
@@ -531,7 +565,6 @@ class ChatApp {
             }
         });
         
-        this.loadPromptConfig();
     }
     
     async loadPrompts() {
@@ -549,20 +582,22 @@ class ChatApp {
                 }
                 select.appendChild(option);
             });
-            
-            this.updateTitles(result.current_config);
-        }
-    }
-    
-    async loadPromptConfig() {
-        const result = await this.apiCall('prompts');
-        if (result.status === 'success') {
             // 将JSON对象转换为支持换行显示的格式
             const formattedJson = this.formatJsonWithNewlines(result.current_config);
             document.getElementById('promptJsonEditor').value = formattedJson;
-            this.updateTitles(result.current_config);
+            this.updatePromtConfig(result.current_config);
         }
     }
+    
+    // async loadPrompts() {
+    //     const result = await this.apiCall('prompts');
+    //     if (result.status === 'success') {
+    //         // 将JSON对象转换为支持换行显示的格式
+    //         const formattedJson = this.formatJsonWithNewlines(result.current_config);
+    //         document.getElementById('promptJsonEditor').value = formattedJson;
+    //         this.updatePromtConfig(result.current_config);
+    //     }
+    // }
 
     // 添加自定义JSON解析方法
     parseJsonWithNewlines(jsonString) {
@@ -666,7 +701,7 @@ class ChatApp {
                     this.showStatus('聊天已加载');
                     this.hideModal();
                     this.loadChatHistory();
-                    this.loadMemoryRounds();
+                    // this.loadMemoryRounds();
                 } else {
                     alert('加载失败: ' + result.message);
                 }
@@ -1059,15 +1094,16 @@ class ChatApp {
     async loadChatHistory() {
         const result = await this.apiCall('chat/history');
         if (result.status === 'success') {
+            document.getElementById('memoryRounds').value = result.memory_rounds || 6;
             const chatHistory = document.getElementById('chatHistory');
             chatHistory.innerHTML = '';
             
             result.chat_history.forEach(msg => {
                 this.addMessage(msg.role, msg.content);
             });
-            
+            console.log(result.current_config);
             // 修复bug：从后端获取当前提示词配置并更新标题
-            this.updateTitles(result.current_config);
+            this.updatePromtConfig(result.current_config);
             
             this.scrollToBottom();
         }

@@ -693,6 +693,35 @@ body {
 .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
 .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
 
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* 折叠按钮 */
+.toggle-btn {
+    display: none; /* 默认在桌面端隐藏 */
+    background: var(--secondary-color);
+    color: white;
+}
+
+.toggle-btn:hover {
+    background: #40484d;
+}
+
+.toggle-btn.active {
+    background: var(--primary-color);
+}
+
+/* 控制面板折叠状态 */
+.controls.collapsed {
+    display: none;
+}
+
 @keyframes typing {
     0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
     40% { transform: scale(1); opacity: 1; }
@@ -894,6 +923,84 @@ body {
 .cg-list::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 3px;
+}
+
+/* 移动设备样式 */
+@media (max-width: 767px) {
+    .header {
+        padding: 16px;
+    }
+    
+    .header-top {
+        margin-bottom: 12px;
+    }
+    
+    .toggle-btn {
+        display: inline-flex;
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+    
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .controls:not(.collapsed) {
+        display: flex;
+        max-height: 500px;
+        opacity: 1;
+    }
+    
+    .controls.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .controls .metro-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .memory-control {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    /* 调整主标题在手机上的大小 */
+    .header-top h1 {
+        font-size: 20px;
+        margin-bottom: 0;
+    }
+}
+
+/* 平板设备样式 */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .toggle-btn {
+        display: inline-flex;
+    }
+    
+    .controls.collapsed {
+        display: none;
+    }
+    
+    .controls:not(.collapsed) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+/* 确保在桌面端控制面板始终显示 */
+@media (min-width: 1024px) {
+    .controls {
+        display: flex !important;
+    }
 }
 
 /* 深色模式支持 */

@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">增强版聊天机器人</title>
+    <style id="builtInCssStyle"></style>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1 id="mainTitle">增强版聊天机器人</h1>
-            <div class="controls">
+            <div class="header-top">
+                <h1 id="mainTitle">增强版聊天机器人</h1>
+                <button id="toggleControls" class="metro-btn toggle-btn">☰ 控制面板</button>
+            </div>
+            <div class="controls" id="controlsPanel">
                 <button id="apiKeyBtn" class="metro-btn">API密钥</button>
                 <button id="promptsBtn" class="metro-btn">提示词</button>
                 <button id="savesBtn" class="metro-btn">存档</button>
@@ -169,5 +173,6 @@
     </template>
 
     <script src="app.js"></script>
+    
 </body>
 </html>
