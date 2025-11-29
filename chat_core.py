@@ -103,6 +103,8 @@ class ChatBot:
                 "Authorization": f"Bearer {self.api_key}"
             }
             
+            # todo world_book trigger
+
             data = {
                 "model": "deepseek-chat",
                 "messages": self.build_messages(user_input),
@@ -152,10 +154,12 @@ class ChatBot:
                 "content": assistant_response
             })
             
-            # 检测并处理图片
-            image_files = self.detect_images_in_response(assistant_response)
-            for image_file in image_files:
-                yield f"\n[图片: {image_file}]"
+            # cg_book trigger
+            for cg in self.cg_book_trigger(assistant_response):
+                yield cg
+            # image_files = self.detect_images_in_response(assistant_response)
+            # for image_file in image_files:
+            #     yield f"\n[图片: {image_file}]"
             
             # 自动保存
             self.auto_save()
@@ -163,17 +167,37 @@ class ChatBot:
         except Exception as e:
             raise Exception(f"聊天失败: {str(e)}")
     
-    def detect_images_in_response(self, response: str) -> List[str]:
-        """检测回复中的图片文件名"""
-        image_files = []
-        cg_files = storage_manager.get_cg_files()
+    def cg_book_trigger(self, content):
+        cg_configs = self.prompt_config.get('cg_book', [])
+        for cg_config in cg_configs:
+            if self.check_key(content, cg_config['keys'], cg_config['key_mode']):
+                print(f"trigger cg: {cg_config['image_url']}")
+                yield f"\n[图片: {cg_config['image_url']}]"
+                break
+
+    def check_key(self, content, keys, key_mode):
+        if key_mode == 'or':
+            for key in keys:
+                if key in content:
+                    return True
+            return False 
+        else:
+            for key in keys:
+                if key not in content:
+                    return False 
+            return True
+
+    # def detect_images_in_response(self, response: str) -> List[str]:
+    #     """检测回复中的图片文件名"""
+    #     image_files = []
+    #     cg_files = storage_manager.get_cg_files()
         
-        for file in cg_files:
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                if file in response:
-                    image_files.append(file)
+    #     for file in cg_files:
+    #         if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+    #             if file in response:
+    #                 image_files.append(file)
         
-        return image_files
+    #     return image_files
     
     def auto_save(self):
         """自动保存聊天记录"""

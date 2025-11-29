@@ -217,17 +217,17 @@ class ChatApp {
 
         // 保留HTML标签，但进行安全处理
         let formatted = content
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
+            // .replace(/</g, '&lt;')
+            // .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>');
+            // .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            // .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // .replace(/`(.*?)`/g, '<code>$1</code>');
 
-        // 恢复一些安全的HTML标签
-        formatted = formatted
-            .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th))&gt;/g, '<$1>')
-            .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th))\s([^&]*)&gt;/g, '<$1 $3>');
+        // // 恢复一些安全的HTML标签
+        // formatted = formatted
+        //     .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th|!--))&gt;/g, '<$1>')
+        //     .replace(/&lt;(\/?(div|span|p|br|strong|em|b|i|u|code|pre|ul|ol|li|h[1-6]|blockquote|table|tr|td|th|--))\s([^&]*)&gt;/g, '<$1 $3>');
 
         return formatted;
     }
