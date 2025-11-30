@@ -60,14 +60,18 @@ class ChatBot:
     def build_messages(self, user_input: str) -> List[Dict[str, str]]:
         """构建消息列表，考虑记忆轮数"""
         messages = []
-        
+
         # 添加系统提示词
         pre_prompt = self.prompt_config.get('pre_prompt', '')
+        # world_book trigger
+        assistant_region = self.chat_history[-1] if len(self.chat_history) > 0 else ''
+        world_book_suffix = self.world_book_trigger(pre_prompt, user_input, assistant_region)
+        
         if pre_prompt:
             # 不需要特殊处理，JSON解析时已经正确处理了换行符
             messages.append({
                 "role": "system",
-                "content": pre_prompt
+                "content": pre_prompt + ('\n' + world_book_suffix['pre_prompt']) if 'pre_prompt' in world_book_suffix else ''
             })
         
         # 添加历史对话（考虑记忆轮数）
@@ -81,8 +85,8 @@ class ChatBot:
             messages.append(msg)
         
         # 添加当前用户输入
-        pre_text = self.prompt_config.get('pre_text', '')
-        post_text = self.prompt_config.get('post_text', '')
+        pre_text = self.prompt_config.get('pre_text', '') + ('\n' + world_book_suffix['pre_text']) if 'pre_text' in world_book_suffix else ''
+        post_text = self.prompt_config.get('post_text', '') + ('\n' + world_book_suffix['post_text']) if 'post_text' in world_book_suffix else ''
         user_message = f"{pre_text}\n{user_input}\n{post_text}"
         
         messages.append({
@@ -103,14 +107,14 @@ class ChatBot:
                 "Authorization": f"Bearer {self.api_key}"
             }
             
-            # todo world_book trigger
-
             data = {
                 "model": "deepseek-chat",
                 "messages": self.build_messages(user_input),
                 "stream": True
             }
-            print(data)
+            
+            storage_manager.info_log(self.current_prompt.split('.')[0], data)
+
             response = requests.post(
                 self.base_url,
                 headers=headers,
@@ -187,17 +191,32 @@ class ChatBot:
                     return False 
             return True
 
-    # def detect_images_in_response(self, response: str) -> List[str]:
-    #     """检测回复中的图片文件名"""
-    #     image_files = []
-    #     cg_files = storage_manager.get_cg_files()
-        
-    #     for file in cg_files:
-    #         if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-    #             if file in response:
-    #                 image_files.append(file)
-        
-    #     return image_files
+    def world_book_trigger(self, system_region, user_input, assistant_region):
+        def _parse_region(num, regions): #length = 3
+            res = []
+            s = 1
+            for i in range(3):
+                if s & num == s:
+                    res.append(regions[i])
+                s *= 2
+            return res
+        world_books = self.prompt_config.get('world_book', [])
+        output = {}
+        for world_book in world_books:
+            r_input = [system_region, user_input, assistant_region]
+            key_regions = _parse_region(world_book.get('key_region', 0), r_input)
+            content = '\n'.join(list(map(str, key_regions)))
+            r_output = ['pre_prompt', 'pre_text', 'post_text']
+            value_regions = _parse_region(world_book.get('value_region', 0), r_output)
+            segs = world_book['key'].split('_')
+            key_mode = segs[1]
+            keys = segs[2].split('@wb@')
+            if self.check_key(content, keys, key_mode):
+                for value_region in value_regions:
+                    output[value_region] = world_book['value']
+        storage_manager.info_log(self.current_prompt.split('.')[0], 'world_book trigger result:' + str(output))
+        return output
+
     
     def auto_save(self):
         """自动保存聊天记录"""
