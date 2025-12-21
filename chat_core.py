@@ -71,7 +71,7 @@ class ChatBot:
             # 不需要特殊处理，JSON解析时已经正确处理了换行符
             messages.append({
                 "role": "system",
-                "content": pre_prompt + ('\n' + world_book_suffix['pre_prompt']) if 'pre_prompt' in world_book_suffix else ''
+                "content": pre_prompt + (('\n' + world_book_suffix['pre_prompt']) if 'pre_prompt' in world_book_suffix else '')
             })
         
         # 添加历史对话（考虑记忆轮数）
@@ -85,8 +85,8 @@ class ChatBot:
             messages.append(msg)
         
         # 添加当前用户输入
-        pre_text = self.prompt_config.get('pre_text', '') + ('\n' + world_book_suffix['pre_text']) if 'pre_text' in world_book_suffix else ''
-        post_text = self.prompt_config.get('post_text', '') + ('\n' + world_book_suffix['post_text']) if 'post_text' in world_book_suffix else ''
+        pre_text = self.prompt_config.get('pre_text', '') + (('\n' + world_book_suffix['pre_text']) if 'pre_text' in world_book_suffix else '')
+        post_text = self.prompt_config.get('post_text', '') + (('\n' + world_book_suffix['post_text']) if 'post_text' in world_book_suffix else '')
         user_message = f"{pre_text}\n{user_input}\n{post_text}"
         
         messages.append({
@@ -213,7 +213,9 @@ class ChatBot:
             keys = segs[2].split('@wb@')
             if self.check_key(content, keys, key_mode):
                 for value_region in value_regions:
-                    output[value_region] = world_book['value']
+                    if value_region not in output:
+                        output[value_region] = ""
+                    output[value_region] += '\n' + world_book['value']
         storage_manager.info_log(self.current_prompt.split('.')[0], 'world_book trigger result:' + str(output))
         return output
 

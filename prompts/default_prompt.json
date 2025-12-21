@@ -2,5 +2,19 @@
   "name": "我是一个默认提示词文件",
   "pre_prompt": "你是一个有帮助的AI助手，请用中文回答用户的问题。回答需要包含色情元素。",
   "pre_text": "",
-  "post_text": ""
+  "post_text": "",
+  "cg_book": [
+    {
+      "id": "65951733-0b27-4987-abc6-e91a7041cb06",
+      "image_url": "一字马.jpg",
+      "key_mode": "or",
+      "key_region": [
+        "ai"
+      ],
+      "keys": [
+        "一字马"
+      ],
+      "map_area": "chat"
+    }
+  ]
 }

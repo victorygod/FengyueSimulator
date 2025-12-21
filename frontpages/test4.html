@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天狼星战术小队2.0 - 核心档案</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+--primary-color: #e0e0e0;
+--secondary-color: #00e676;
+--accent-color: #29b6f6;
+--background-color: rgba(16, 24, 32, 0.85);
+--card-background: rgba(26, 35, 43, 0.9);
+--border-color: rgba(63, 74, 86, 0.7);
+--font-family-title: 'Orbitron', sans-serif;
+--font-family-body: 'Noto Sans SC', sans-serif;
+--text-light: #f0f0f0;
+--text-dark: #b0b8c0;
+--success-color: #00c853;
+--warning-color: #ffab00;
+--danger-color: #ff1744;
+--info-color: #29b6f6;
+--quality-common: #b0b8c0;
+--quality-uncommon: #00c853;
+--quality-rare: #29b6f6;
+--quality-epic: #9c27b0;
+--quality-legendary: #ffab00;
+--transition-speed: 0.3s;
+}
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+html {
+scroll-behavior: smooth;
+}
+body {
+font-family: var(--font-family-body);
+color: var(--primary-color);
+line-height: 1.6;
+overflow-x: hidden;
+background: url('https://catai.wiki/f895392e-3c5a-4399-8708-d9d35b841700/bg') no-repeat center center fixed;
+background-size: cover;
+position: relative;
+}
+body::before {
+content: '';
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 20, 0.7);
+z-index: -1;
+}
+/* 导航栏样式 */
+header {
+position: fixed;
+top: 0;
+width: 100%;
+background-color: rgba(26, 35, 43, 0.95);
+padding: 15px 0;
+text-align: center;
+border-bottom: 2px solid var(--secondary-color);
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+z-index: 1000;
+backdrop-filter: blur(10px);
+}
+header h1 {
+font-family: var(--font-family-title);
+color: var(--secondary-color);
+margin: 0;
+font-size: 2.5em;
+letter-spacing: 2px;
+text-shadow: 0 0 8px var(--secondary-color);
+transition: all var(--transition-speed);
+}
+header p {
+color: var(--text-dark);
+margin-top: 5px;
+font-size: 1em;
+}
+nav {
+display: flex;
+justify-content: center;
+margin-top: 10px;
+flex-wrap: wrap;
+}
+.nav-link {
+background-color: transparent;
+color: var(--primary-color);
+border: none;
+padding: 10px 20px;
+margin: 0 5px;
+cursor: pointer;
+font-size: 1em;
+font-weight: bold;
+transition: all var(--transition-speed);
+border-radius: 4px;
+position: relative;
+overflow: hidden;
+}
+.nav-link:hover {
+color: var(--secondary-color);
+background-color: rgba(0, 230, 118, 0.1);
+}
+.nav-link.active {
+color: var(--secondary-color);
+background-color: rgba(0, 230, 118, 0.15);
+box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+}
+/* 主内容区域 */
+main {
+margin-top: 150px;
+padding: 0 20px;
+max-width: 1400px;
+margin-left: auto;
+margin-right: auto;
+}
+section {
+padding: 60px 20px;
+margin-bottom: 40px;
+background-color: var(--card-background);
+border-radius: 12px;
+border: 1px solid var(--border-color);
+box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+position: relative;
+overflow: hidden;
+transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+section:hover {
+box-shadow: 0 8px 30px rgba(0, 230, 118, 0.2);
+}
+section::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 3px;
+background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+}
+h2 {
+font-family: var(--font-family-title);
+color: var(--secondary-color);
+font-size: 2.5em;
+margin-bottom: 30px;
+text-align: center;
+text-shadow: 0 0 5px rgba(0, 230, 118, 0.3);
+position: relative;
+padding-bottom: 15px;
+}
+h2::after {
+content: '';
+position: absolute;
+bottom: 0;
+left: 50%;
+transform: translateX(-50%);
+width: 100px;
+height: 3px;
+background: linear-gradient(90deg, transparent, var(--secondary-color), transparent);
+}
+h3 {
+font-family: var(--font-family-title);
+color: var(--text-light);
+font-size: 1.8em;
+margin: 25px 0 15px;
+border-bottom: 1px solid var(--border-color);
+padding-bottom: 8px;
+}
+h4 {
+font-family: var(--font-family-title);
+color: var(--text-dark);
+font-size: 1.3em;
+margin: 20px 0 10px;
+}
+p, ul {
+margin-bottom: 15px;
+color: var(--text-dark);
+}
+ul {
+list-style: none;
+padding-left: 0;
+}
+ul li {
+margin-bottom: 10px;
+padding-left: 25px;
+position: relative;
+}
+ul li::before {
+content: '▶';
+color: var(--secondary-color);
+position: absolute;
+left: 0;
+top: 0;
+font-size: 0.9em;
+line-height: 1.6;
+}
+/* 角色网格 */
+.character-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+gap: 25px;
+margin-top: 30px;
+}
+.character-card {
+background-color: rgba(31, 42, 53, 0.8);
+border-radius: 10px;
+padding: 20px;
+border: 1px solid var(--border-color);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+position: relative;
+overflow: hidden;
+}
+.character-card:hover {
+transform: translateY(-10px);
+box-shadow: 0 15px 30px rgba(0, 230, 118, 0.2);
+}
+.character-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 4px;
+background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+}
+.character-card img {
+width: 100%;
+height: 400px;
+object-fit: cover;
+border-radius: 8px;
+margin-bottom: 15px;
+border: 1px solid var(--secondary-color);
+box-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+}
+.character-card h3 {
+color: var(--secondary-color);
+text-align: center;
+font-size: 1.8em;
+margin-top: 0;
+border-bottom: none;
+padding-bottom: 0;
+}
+/* 势力卡片 */
+.world-card, .system-card {
+background-color: rgba(31, 42, 53, 0.8);
+border-radius: 10px;
+padding: 25px;
+margin-bottom: 25px;
+border: 1px solid var(--border-color);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+position: relative;
+overflow: hidden;
+}
+.world-card::before, .system-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 4px;
+background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+}
+/* 角色配置部分 */
+.config-container {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 30px;
+margin-top: 30px;
+}
+@media (max-width: 992px) {
+.config-container {
+grid-template-columns: 1fr;
+}
+}
+.form-section {
+background-color: rgba(31, 42, 53, 0.8);
+border-radius: 10px;
+padding: 25px;
+border: 1px solid var(--border-color);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+.form-section h3 {
+margin-top: 0;
+}
+.form-group {
+margin-bottom: 20px;
+}
+.form-group label {
+display: block;
+margin-bottom: 8px;
+color: var(--text-light);
+font-weight: bold;
+font-size: 1.05em;
+}
+.form-group input,
+.form-group select {
+width: 100%;
+padding: 12px;
+border-radius: 6px;
+border: 1px solid var(--border-color);
+background-color: rgba(42, 53, 64, 0.8);
+color: var(--text-light);
+font-size: 1em;
+transition: all var(--transition-speed);
+}
+.form-group input:focus,
+.form-group select:focus {
+border-color: var(--secondary-color);
+box-shadow: 0 0 8px rgba(0, 230, 118, 0.3);
+outline: none;
+}
+.button-primary {
+background-color: var(--secondary-color);
+color: var(--background-color);
+border: none;
+padding: 12px 28px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 1.1em;
+font-weight: bold;
+transition: all var(--transition-speed);
+margin-top: 10px;
+width: 100%;
+text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+.button-primary:hover {
+background-color: #00b35e;
+box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
+}
+/* 天赋/背景模块 */
+.roll-module {
+background-color: rgba(31, 42, 53, 0.8);
+border-radius: 10px;
+padding: 25px;
+border: 1px solid var(--border-color);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+.roll-module h3 {
+margin-top: 0;
+}
+.roll-description {
+color: var(--text-dark);
+margin-bottom: 20px;
+text-align: center;
+}
+.roll-button-container {
+display: flex;
+justify-content: center;
+margin-bottom: 25px;
+}
+.button-roll {
+background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+color: var(--background-color);
+border: none;
+padding: 14px 32px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 1.2em;
+font-weight: bold;
+transition: all var(--transition-speed);
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+box-shadow: 0 4px 15px rgba(41, 182, 246, 0.3);
+}
+.button-roll:hover {
+transform: translateY(-3px);
+box-shadow: 0 7px 20px rgba(41, 182, 246, 0.4);
+}
+.button-roll i {
+font-size: 1.3em;
+}
+.roll-results {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+}
+@media (max-width: 768px) {
+.roll-results {
+grid-template-columns: 1fr;
+}
+}
+.roll-column {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+.roll-column h4 {
+text-align: center;
+margin-bottom: 10px;
+color: var(--accent-color);
+}
+.roll-item {
+background-color: rgba(42, 53, 64, 0.8);
+border-radius: 8px;
+padding: 15px;
+border: 1px solid var(--border-color);
+cursor: pointer;
+transition: all var(--transition-speed);
+position: relative;
+}
+.roll-item:hover {
+border-color: var(--accent-color);
+box-shadow: 0 0 10px rgba(41, 182, 246, 0.2);
+}
+.roll-item.selected {
+border-color: var(--secondary-color);
+background-color: rgba(0, 230, 118, 0.1);
+box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+}
+.roll-item.selected::before {
+content: '✓';
+position: absolute;
+top: 10px;
+right: 10px;
+color: var(--secondary-color);
+font-weight: bold;
+font-size: 1.2em;
+}
+.roll-item-name {
+font-weight: bold;
+font-size: 1.1em;
+margin-bottom: 5px;
+}
+.roll-item-desc {
+font-size: 0.9em;
+color: var(--text-dark);
+}
+.quality-common { color: var(--quality-common); }
+.quality-uncommon { color: var(--quality-uncommon); }
+.quality-rare { color: var(--quality-rare); }
+.quality-epic { color: var(--quality-epic); }
+.quality-legendary { color: var(--quality-legendary); }
+.copy-success-message {
+display: none;
+background-color: var(--success-color);
+color: var(--background-color);
+padding: 12px 20px;
+border-radius: 6px;
+margin-top: 20px;
+text-align: center;
+font-weight: bold;
+animation: fadeIn 0.5s;
+}
+.copy-success-message.show {
+display: block;
+}
+/* 进度条 */
+.progress-container {
+margin: 20px 0;
+}
+.progress-header {
+display: flex;
+justify-content: space-between;
+margin-bottom: 5px;
+}
+.progress-bar-container {
+width: 100%;
+background-color: rgba(63, 74, 86, 0.5);
+border-radius: 5px;
+overflow: hidden;
+border: 1px solid var(--border-color);
+height: 25px;
+}
+.progress-bar {
+height: 100%;
+background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+width: 0%;
+border-radius: 5px;
+text-align: center;
+color: var(--background-color);
+font-size: 0.9em;
+line-height: 25px;
+transition: width 1s ease-in-out;
+font-family: var(--font-family-title);
+}
+/* 页脚 */
+footer {
+padding: 30px;
+text-align: center;
+background-color: rgba(26, 35, 43, 0.9);
+border-top: 1px solid var(--border-color);
+color: var(--text-dark);
+margin-top: 60px;
+}
+footer a {
+color: var(--secondary-color);
+text-decoration: none;
+transition: color var(--transition-speed);
+}
+footer a:hover {
+color: var(--text-light);
+text-decoration: underline;
+}
+/* 动画 */
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+@keyframes slideInUp {
+from {
+opacity: 0;
+transform: translateY(30px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+.section-animate {
+animation: slideInUp 0.6s ease-out;
+}
+/* 滚动指示器 */
+.scroll-indicator {
+position: fixed;
+right: 20px;
+top: 50%;
+transform: translateY(-50%);
+display: flex;
+flex-direction: column;
+gap: 10px;
+z-index: 100;
+}
+.scroll-dot {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background-color: var(--border-color);
+cursor: pointer;
+transition: all var(--transition-speed);
+}
+.scroll-dot.active {
+background-color: var(--secondary-color);
+box-shadow: 0 0 10px var(--secondary-color);
+}
+.scroll-dot:hover {
+background-color: var(--accent-color);
+transform: scale(1.3);
+}
+/* 响应式设计 */
+@media (max-width: 768px) {
+header h1 {
+font-size: 2em;
+}
+nav {
+flex-wrap: wrap;
+}
+.nav-link {
+padding: 8px 12px;
+font-size: 0.9em;
+margin: 2px;
+}
+main {
+margin-top: 140px;
+padding: 0 10px;
+}
+section {
+padding: 40px 15px;
+}
+h2 {
+font-size: 2em;
+}
+.character-grid {
+grid-template-columns: 1fr;
+}
+.scroll-indicator {
+display: none;
+}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>天狼星战术小队2.0</h1>
+<p>Sirius Tactical Squad - 潜行于灰色地带的精英之刃</p>
+<nav>
+<button class="nav-link active" data-section="world">世界观</button>
+<button class="nav-link" data-section="characters">队员档案</button>
+<button class="nav-link" data-section="systems">核心机制</button>
+<button class="nav-link" data-section="player-config">角色配置</button>
+</nav>
+</header>
+<div class="scroll-indicator">
+<div class="scroll-dot active" data-section="world"></div>
+<div class="scroll-dot" data-section="characters"></div>
+<div class="scroll-dot" data-section="systems"></div>
+<div class="scroll-dot" data-section="player-config"></div>
+</div>
+<main>
+<section id="world" class="section-animate">
+<h2>世界观档案</h2>
+<div class="world-card">
+<h3>【世界类型】</h3>
+<p>现代军事 / 灰色PMC / 生化阴谋</p>
+<h3>【一句话简介】</h3>
+<p>高压战术行动与深刻人性羁绊的交织；表面的专业冷酷下每个人都背负秘密与创伤；信任与背叛的残酷博弈；在枪林弹雨中绽放的禁忌之恋。</p>
+<h3>【核心概念】</h3>
+<p>21世纪中叶，全球地缘政治进入'新冷战2.0'时代。表面上各大国维持脆弱和平，暗地里通过私营军事公司(PMC)进行代理人战争、情报窃取、要人暗杀等'不存在的行动'。在这片法律与道德的灰色地带，'哨兵'公司旗下的精英战术小队'天狼星'活跃于世界各个冲突热点。</p>
+<p>而作为小队的新成员，你被队长雪野霞亲自接纳。她对你格外关照，其他队员也友善热情。但随着你们不断地共同出生入死，却发现每个成员都藏着不愿提及的过去。你开始思考——霞对你的特殊照顾，究竟是出于真心，还是另有目的？</p>
+<h3>【世界基调】</h3>
+<p>专业冷峻的战术硬核感、温情脉脉的家人羁绊、暗流涌动的阴谋悬疑、致命而炽热的情感张力</p>
+</div>
+<h3>重要信息</h3>
+<ul>
+<li><strong>PMC的灰色地带：</strong> 小队执行的任务游走于法律边缘，雇主身份复杂（可能是政府、企业、甚至犯罪组织），道德困境时常出现。</li>
+<li><strong>隐藏真相机制：</strong> 每个核心角色都有自身的秘密设定，这些真相会通过线索、异常行为、记忆碎片逐步揭示。</li>
+<li><strong>恋爱养成核心：</strong> 与队长雪野霞的关系是主线，好感度系统影响她的态度、语言、行为。</li>
+</ul>
+<h3>主要势力与概念</h3>
+<div class="character-grid">
+<div class="character-card world-card">
+<h4>普罗米修斯计划</h4>
+<p>秘密军事生化项目，旨在创造超越人类极限的'完美士兵'。通过基因编辑、神经强化、生物芯片植入等手段，赋予实验体远超常人的反应速度、力量、愈合能力及轻微的危机预感。计划表面关闭，但各方势力仍在追踪，试图重启或利用该技术。</p>
+</div>
+<div class="character-card world-card">
+<h4>幽影议会</h4>
+<p>横跨多国、盘根错节的影子联盟，由退役高级将领、情报机构黑手套、跨国资本巨鳄、灰色科技企业主构成的利益共同体网络。核心目标是维持并扩大全球性的'可控冲突经济'。通过煽动区域紧张、代理人战争、技术垄断与军火倒卖，确保军事-工业-情报复合体持续获得巨额利润。议会中的'激进进化派'与'黄金天平'理念部分重合，存在合作关系。</p>
+</div>
+<div class="character-card world-card">
+<h4>黄金天平</h4>
+<p>理念驱动型秘密结社，成员多为各领域顶尖但幻灭的精英。核心教条是'人类文明的熵增必须被精英的理性意志所逆转'。相信多数人类受情感、短视和群体盲目性驱动，正在浪费资源、破坏环境、陷入无休止的低效内耗。终极愿景是执行'人类2.0'计划，利用包括'普罗米修斯'技术在内的多种手段，逐步淘汰或'管理'所谓的'低效人口'。</p>
+</div>
+</div>
+</section>
+<section id="characters" class="section-animate">
+<h2>队员档案</h2>
+<div class="character-grid">
+<!-- 雪野霞 -->
+<div class="character-card">
+<img src="https://cg-img.pornai.fun/account/2ff593c2-ba7d-4ec7-9218-5ecdfc202f2f.jpg" alt="雪野霞">
+<h3>雪野霞 - 白狼</h3>
+<h4>队长 / 突击与总指挥</h4>
+<ul>
+<li><strong>性别：</strong> 女 | <strong>年龄：</strong> 26岁</li>
+<li><strong>身高：</strong> 172cm | <strong>体重：</strong> 56kg | <strong>三围：</strong> 93(F)-57-88</li>
+<li><strong>外貌：</strong> 雪白长发垂至腰际，赤红色瞳孔如火焰。肌肤白皙如雪，面容精致冷艳，气质圣洁却又带着致命诱惑。</li>
+<li><strong>性格：</strong> 表面冷静专业的指挥官，对队员温柔可靠。</li>
+<li><strong>背景：</strong> 前日本陆上自卫队特殊作战群精英</li>
+</ul>
+</div>
+<!-- 莉莉丝 -->
+<div class="character-card">
+<img src="https://cg-img.pornai.fun/account/54249d65-d1ce-4f7d-85d1-2036225be713.jpg" alt="莉莉丝">
+<h3>莉莉丝 - 天使</h3>
+<h4>医疗兵 / 黑客</h4>
+<ul>
+<li><strong>性别：</strong> 女 | <strong>年龄：</strong> 16岁 (外表永远停在14岁)</li>
+<li><strong>身高：</strong> 148cm | <strong>体重：</strong> 38kg | <strong>三围：</strong> 76(A)-53-78</li>
+<li><strong>外貌：</strong> 璀璨金色短发，湛蓝眼眸，稚气面容。头顶有呆毛，笑起来有小酒窝。</li>
+<li><strong>性格：</strong> 天真活泼又有点天然呆，队内公认的队宠小妹妹。用笑容治愈大家。</li>
+<li><strong>背景：</strong> 东欧冲突区幸存的天才孤儿，被霞发现并带回。拥有医学博士同等学力与神乎其技的黑客技术。</li>
+</ul>
+</div>
+<!-- 马库斯·约翰逊 -->
+<div class="character-card">
+<img src="https://catai.wiki/ad524588-9d19-4041-9e04-f7c5ab93cc00/mobile" alt="马库斯·约翰逊">
+<h3>马库斯·约翰逊 - 堡垒</h3>
+<h4>重火力手 / 爆破专家</h4>
+<ul>
+<li><strong>性别：</strong> 男 | <strong>年龄：</strong> 42岁</li>
+<li><strong>外貌：</strong> 光头，身高195cm，宛如移动铁塔。面容坚毅，左颊有旧伤疤，目光沉稳可靠。</li>
+<li><strong>性格：</strong> 沉稳可靠，是团队的坚实后盾。对霞和莉莉丝有着父亲般的保护欲。</li>
+<li><strong>背景：</strong> 前美国陆军游骑兵军士长，因一次任务中'误伤'平民而陷入严重PTSD，自责退役。</li>
+</ul>
+</div>
+<!-- 艾莉森·克罗夫特 -->
+<div class="character-card">
+<img src="https://cg-img.pornai.fun/account/fdec9316-ef56-4da0-ad74-8a8d57d6cd05.jpg" alt="艾莉森·克罗夫特">
+<h3>艾莉森·克罗夫特 - 幽灵</h3>
+<h4>狙击手 / 追踪者</h4>
+<ul>
+<li><strong>性别：</strong> 女 | <strong>年龄：</strong> 24岁</li>
+<li><strong>身高：</strong> 175cm | <strong>体重：</strong> 57kg | <strong>三围：</strong> 86(C)-58-87</li>
+<li><strong>外貌：</strong> 乌黑短发，冰蓝眼眸不带一丝温度。极致冷静、克制的禁欲系冰山美人。</li>
+<li><strong>性格：</strong> 极致理性与自律，对'无意义的情感波动'抱有偏执的厌恶。复仇是唯一允许自己燃烧的感情。</li>
+<li><strong>背景：</strong> 前FBI顶级人质救援队狙击手，因'任务失败'心灰意冷离开体制。</li>
+</ul>
+</div>
+<!-- 陈明轩 -->
+<div class="character-card">
+<img src="https://cg-img.pornai.fun/account/75a019d3-c16a-4b01-8d00-e00840fff67c.jpg" alt="陈明轩">
+<h3>陈明轩 - 渡鸦</h3>
+<h4>情报分析员</h4>
+<ul>
+<li><strong>性别：</strong> 男 | <strong>年龄：</strong> 31岁</li>
+<li><strong>外貌：</strong> 戴金丝眼镜，发型一丝不苟，衣着整洁得体。举止儒雅，富有同理心。</li>
+<li><strong>性格：</strong> 表面上是每个人的好朋友，情报总是准确无误。</li>
+<li><strong>背景：</strong> 前英国军情六处高级分析师，因'对官僚体系失望'而转投PMC。</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="systems" class="section-animate">
+<h2>核心机制</h2>
+<div class="system-card">
+<h3>游戏流程系统</h3>
+<p>游戏流程分为<strong>日常阶段、任务触发、任务简报、出发、执行、结局与返回、报酬与日常</strong>等环节。</p>
+<p>日常阶段可与队员互动、升级装备；任务阶段则从简报到执行，充满战术挑战与剧情推进。执行阶段会引入随机事件，确保每次任务的不可预测性。每个任务最多引入一个新设定，并有独特的桥段创新要求。</p>
+</div>
+<div class="system-card">
+<h3>性体力与性癖养成系统</h3>
+<div class="progress-container">
+<div class="progress-header">
+<span>性体力值</span>
+<span id="stamina-value">100/100</span>
+</div>
+<div class="progress-bar-container">
+<div class="progress-bar" id="stamina-progress" style="width: 100%;">100/100</div>
+</div>
+</div>
+<p><strong>性体力系统：</strong>反映性行为中的身体状态，范围0-100，初始100。每次高潮、激烈运动或使用改造能力都会消耗体力，休息和睡眠则可恢复。体力状态会影响她的反应，从精力充沛到濒临极限，甚至可能短暂昏厥。</p>
+<div class="progress-container">
+<div class="progress-header">
+<span>主导倾向 (S值)</span>
+<span id="s-value">10/150</span>
+</div>
+<div class="progress-bar-container">
+<div class="progress-bar" id="s-progress" style="width: 6.7%; background-color: var(--accent-color);">10/150</div>
+</div>
+</div>
+<div class="progress-container">
+<div class="progress-header">
+<span>服从倾向 (M值)</span>
+<span id="m-value">5/150</span>
+</div>
+<div class="progress-bar-container">
+<div class="progress-bar" id="m-progress" style="width: 3.3%; background-color: var(--accent-color);">5/150</div>
+</div>
+</div>
+<p><strong>性癖养成系统：</strong>在性经历中逐渐形成偏好，分为主导倾向(S值)和服从倾向(M值)，各0-150，初始S10/M5。每50点为一个阶段，从羞涩试探到完全放开。特定体位、道具等特殊癖好也会独立记录并解锁。</p>
+</div>
+</section>
+<section id="player-config" class="section-animate">
+<h2>角色配置</h2>
+<div class="config-container">
+<div class="form-section">
+<h3>玩家信息</h3>
+<div class="form-group">
+<label for="player-name">姓名：</label>
+<input type="text" id="player-name" name="player-name" placeholder="请输入您的姓名" value="">
+</div>
+<div class="form-group">
+<label for="player-code">代号：</label>
+<input type="text" id="player-code" name="player-code" placeholder="请输入您的代号" value="灰狐">
+</div>
+<div class="form-group">
+<label for="player-gender">性别：</label>
+<select id="player-gender" name="player-gender">
+<option value="男">男</option>
+<option value="女">女</option>
+<option value="其他">其他</option>
+</select>
+</div>
+<div class="form-group">
+<label for="player-age">年龄：</label>
+<input type="text" id="player-age" name="player-age" placeholder="请输入您的年龄" value="28">
+</div>
+<div class="form-group">
+<label for="player-hometown">故乡：</label>
+<input type="text" id="player-hometown" name="player-hometown" placeholder="请输入您的故乡" value="上海">
+</div>
+<button type="button" id="copy-config-btn" class="button-primary">复制配置信息</button>
+<div id="copy-success" class="copy-success-message"></div>
+</div>
+<div class="roll-module">
+<h3>随机天赋/背景</h3>
+<p class="roll-description">点击下方按钮抽取您的专属天赋与背景！抽取后点击选项即可选择。</p>
+<div class="roll-button-container">
+<button id="roll-btn" class="button-roll">
+<span>抽取天赋/背景</span>
+<span>🎲</span>
+</button>
+</div>
+<div id="roll-results" class="roll-results">
+<div class="roll-column">
+<h4>天赋选项</h4>
+<!-- 天赋结果将通过JS动态添加 -->
+</div>
+<div class="roll-column">
+<h4>背景选项</h4>
+<!-- 背景结果将通过JS动态添加 -->
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+// 导航滚动功能
+const navLinks = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('section');
+const scrollDots = document.querySelectorAll('.scroll-dot');
+// 导航点击事件
+navLinks.forEach(link => {
+link.addEventListener('click', () => {
+const targetId = link.dataset.section;
+const targetSection = document.getElementById(targetId);
+// 更新导航状态
+navLinks.forEach(l => l.classList.remove('active'));
+link.classList.add('active');
+// 滚动到目标区域
+targetSection.scrollIntoView({ behavior: 'smooth' });
+// 更新滚动指示器
+updateScrollIndicator(targetId);
+});
+});
+// 滚动指示器点击事件
+scrollDots.forEach(dot => {
+dot.addEventListener('click', () => {
+const targetId = dot.dataset.section;
+const targetSection = document.getElementById(targetId);
+// 更新导航状态
+navLinks.forEach(l => l.classList.remove('active'));
+document.querySelector(`.nav-link[data-section="${targetId}"]`).classList.add('active');
+// 滚动到目标区域
+targetSection.scrollIntoView({ behavior: 'smooth' });
+// 更新滚动指示器
+updateScrollIndicator(targetId);
+});
+});
+// 滚动监听器
+window.addEventListener('scroll', () => {
+let current = '';
+sections.forEach(section => {
+const sectionTop = section.offsetTop;
+const sectionHeight = section.clientHeight;
+if (scrollY >= (sectionTop - 200)) {
+current = section.getAttribute('id');
+}
+});
+if (current) {
+// 更新导航状态
+navLinks.forEach(link => {
+link.classList.remove('active');
+if (link.dataset.section === current) {
+link.classList.add('active');
+}
+});
+// 更新滚动指示器
+updateScrollIndicator(current);
+}
+});
+// 更新滚动指示器
+function updateScrollIndicator(currentSection) {
+scrollDots.forEach(dot => {
+dot.classList.remove('active');
+if (dot.dataset.section === currentSection) {
+dot.classList.add('active');
+}
+});
+}
+// 复制配置功能
+const copyConfigBtn = document.getElementById('copy-config-btn');
+const copySuccessMsg = document.getElementById('copy-success');
+copyConfigBtn.addEventListener('click', async () => {
+const playerName = document.getElementById('player-name').value;
+const playerCode = document.getElementById('player-code').value;
+const playerGender = document.getElementById('player-gender').value;
+const playerAge = document.getElementById('player-age').value;
+const playerHometown = document.getElementById('player-hometown').value;
+let configText = `姓名：${playerName}｜性别：${playerGender}｜年龄：${playerAge}｜代号：${playerCode}`;
+// 获取选中的天赋和背景
+const selectedTalent = document.querySelector('#roll-results .roll-item.selected[data-type="talent"] .roll-item-name');
+const selectedBackground = document.querySelector('#roll-results .roll-item.selected[data-type="background"] .roll-item-name');
+if (selectedTalent) {
+configText += `｜天赋：${selectedTalent.textContent}`;
+}
+if (selectedBackground) {
+configText += `｜背景：${selectedBackground.textContent}`;
+}
+if (playerHometown) {
+configText += `｜故乡：${playerHometown}`;
+}
+try {
+await navigator.clipboard.writeText(configText);
+copySuccessMsg.textContent = '配置信息已复制到剪贴板！';
+copySuccessMsg.classList.add('show');
+setTimeout(() => {
+copySuccessMsg.classList.remove('show');
+}, 3000);
+} catch (err) {
+console.error('Failed to copy: ', err);
+copySuccessMsg.textContent = '复制失败，请手动复制文本。';
+copySuccessMsg.style.backgroundColor = 'var(--danger-color)';
+copySuccessMsg.classList.add('show');
+setTimeout(() => {
+copySuccessMsg.classList.remove('show');
+copySuccessMsg.style.backgroundColor = 'var(--success-color)';
+}, 3000);
+}
+});
+// 天赋/背景数据
+const talents = [
+{ name: "战术大师", quality: "legendary", desc: "拥有卓越的战术洞察力，能迅速分析战场局势并制定最佳方案。" },
+{ name: "神枪手", quality: "epic", desc: "枪法出神入化，百步穿杨，辕门射戟，精准命中敌方弱点。" },
+{ name: "潜行专家", quality: "rare", desc: "来无影去无踪。隐匿身形的能力极强，擅长无声渗透和脱离。" },
+{ name: "爆破能手", quality: "uncommon", desc: "爆炸就是艺术！精通各类爆破物的使用和拆解，是团队的攻坚利器。" },
+{ name: "医疗支援", quality: "common", desc: "华佗再世，妙手回春！掌握基础战场急救知识，能有效稳定伤员情况。" },
+{ name: "快速反应", quality: "rare", desc: "神经反射速度超群，能规避突如其来的危险。" },
+{ name: "黑客新手", quality: "uncommon", desc: "具备初步的电子设备入侵能力，可辅助情报获取。" },
+{ name: "心理韧性", quality: "epic", desc: "在极端压力下仍能保持冷静，不易受负面情绪影响。" },
+{ name: "格斗专精", quality: "rare", desc: "如果一拳解决不了问题，就再来一拳！近身格斗技巧娴熟，擅长一对一缠斗。" },
+{ name: "天生领袖", quality: "legendary", desc: "天生具有凝聚人心的魅力，能有效提升团队士气。" },
+{ name: "机械师", quality: "uncommon", desc: "对机械设备有独特的理解，能进行快速维修和改造。" },
+{ name: "侦察兵", quality: "common", desc: "擅长野外生存与侦察，能为小队提供重要的前线信息。" }
+];
+const backgrounds = [
+{ name: "特种部队退役", quality: "epic", desc: "曾是世界顶尖特种部队的一员，拥有丰富的实战经验。" },
+{ name: "PMC老兵", quality: "rare", desc: "在多家PMC服役多年，熟悉灰色地带的生存法则。" },
+{ name: "情报分析员", quality: "uncommon", desc: "曾供职于情报机构，擅长信息收集与分析。" },
+{ name: "科研人员", quality: "common", desc: "拥有专业科研背景，对特定领域技术有深入了解。" },
+{ name: "街头浪子", quality: "uncommon", desc: "在混乱的街头摸爬滚打，练就了敏锐的直觉和生存技巧。" },
+{ name: "军事家族", quality: "rare", desc: "出身军事世家，从小接受严格训练，军事素养极高。" },
+{ name: "前执法人员", quality: "common", desc: "曾在警察或联邦机构任职，熟悉法律和犯罪心理。" },
+{ name: "流亡贵族", quality: "epic", desc: "某个没落贵族或政治家族的后裔，掌握着不为人知的资源或信息。" }
+];
+// Roll天赋/背景功能
+const rollBtn = document.getElementById('roll-btn');
+const rollResultsDiv = document.getElementById('roll-results');
+// 创建天赋/背景选项元素
+function createRollItem(item, type) {
+const itemDiv = document.createElement('div');
+itemDiv.classList.add('roll-item');
+itemDiv.dataset.type = type;
+itemDiv.innerHTML = `
+<div class="roll-item-name quality-${item.quality}">${item.name}</div>
+<div class="roll-item-desc">${item.desc}</div>
+`;
+itemDiv.addEventListener('click', () => {
+// 移除同类型其他选项的选中状态
+document.querySelectorAll(`.roll-item[data-type="${type}"]`).forEach(el => {
+el.classList.remove('selected');
+});
+// 添加当前选项的选中状态
+itemDiv.classList.add('selected');
+});
+return itemDiv;
+}
+// 抽取天赋/背景
+rollBtn.addEventListener('click', () => {
+// 清空之前的结果
+const talentColumn = rollResultsDiv.querySelector('.roll-column:first-child');
+const backgroundColumn = rollResultsDiv.querySelector('.roll-column:last-child');
+// 只清空选项，保留标题
+talentColumn.querySelectorAll('.roll-item').forEach(item => item.remove());
+backgroundColumn.querySelectorAll('.roll-item').forEach(item => item.remove());
+// 随机抽取3个不重复的天赋
+const selectedTalents = [];
+const talentPool = [...talents];
+for (let i = 0; i < 3 && talentPool.length > 0; i++) {
+const randomIndex = Math.floor(Math.random() * talentPool.length);
+selectedTalents.push(talentPool.splice(randomIndex, 1)[0]);
+}
+// 随机抽取3个不重复的背景
+const selectedBackgrounds = [];
+const backgroundPool = [...backgrounds];
+for (let i = 0; i < 3 && backgroundPool.length > 0; i++) {
+const randomIndex = Math.floor(Math.random() * backgroundPool.length);
+selectedBackgrounds.push(backgroundPool.splice(randomIndex, 1)[0]);
+}
+// 将抽取结果添加到页面
+selectedTalents.forEach(talent => {
+talentColumn.appendChild(createRollItem(talent, 'talent'));
+});
+selectedBackgrounds.forEach(background => {
+backgroundColumn.appendChild(createRollItem(background, 'background'));
+});
+// 添加滚动动画效果
+rollResultsDiv.style.animation = 'none';
+setTimeout(() => {
+rollResultsDiv.style.animation = 'fadeIn 0.5s';
+}, 10);
+});
+// 初始加载时抽取一组天赋/背景
+setTimeout(() => {
+rollBtn.click();
+}, 500);
+// 模拟进度条动画
+function animateProgressBars() {
+const staminaProgress = document.getElementById('stamina-progress');
+const sProgress = document.getElementById('s-progress');
+const mProgress = document.getElementById('m-progress');
+// 随机变化进度条数值（仅演示）
+const randomStamina = 70 + Math.floor(Math.random() * 30);
+const randomS = 10 + Math.floor(Math.random() * 50);
+const randomM = 5 + Math.floor(Math.random() * 30);
+staminaProgress.style.width = `${randomStamina}%`;
+staminaProgress.textContent = `${randomStamina}/100`;
+document.getElementById('stamina-value').textContent = `${randomStamina}/100`;
+sProgress.style.width = `${(randomS / 150) * 100}%`;
+sProgress.textContent = `${randomS}/150`;
+document.getElementById('s-value').textContent = `${randomS}/150`;
+mProgress.style.width = `${(randomM / 150) * 100}%`;
+mProgress.textContent = `${randomM}/150`;
+document.getElementById('m-value').textContent = `${randomM}/150`;
+}
+// 每10秒更新一次进度条（仅演示）
+setInterval(animateProgressBars, 10000);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>天狼星战术小队 · 哨兵PMC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+--bg: #0b0e17;
+--card: #12151f;
+--accent: #e74c3c;
+--snow: #ecf0f1;
+--wolf: #c0392b;
+--text: #bdc3c7;
+--border: #2c3e50;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+font-family: "Microsoft YaHei", sans-serif;
+background: linear-gradient(135deg, #0b0e17 0%, #1a1f2e 100%);
+color: var(--text);
+min-height: 100vh;
+background-attachment: fixed;
+overflow-x: hidden;
+padding-top: 120px; /* 为固定导航栏留出空间 */
+}
+.header-bar {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+height: 120px;
+background: linear-gradient(rgba(11,14,23,0.9), rgba(11,14,23,0.95)), 
+url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+text-align: center;
+color: white;
+z-index: 100;
+border-bottom: 3px solid var(--accent);
+}
+.logo {
+font-size: 2.8rem;
+font-weight: 900;
+letter-spacing: 6px;
+text-shadow: 0 0 20px rgba(231,76,60,0.8);
+margin-bottom: 0.5rem;
+}
+.logo span { color: var(--accent); }
+.subtitle {
+font-size: 1.2rem;
+letter-spacing: 3px;
+opacity: 0.9;
+}
+.nav-tabs {
+position: fixed;
+top: 120px; /* 在header-bar下方 */
+left: 0;
+right: 0;
+background: rgba(18,21,31,0.98);
+backdrop-filter: blur(10px);
+z-index: 999;
+display: flex;
+justify-content: center;
+padding: 1rem 0;
+border-bottom: 1px solid var(--border);
+/* 确保PC端正常显示 */
+overflow: visible;
+white-space: nowrap;
+}
+.nav-tabs-container {
+display: flex;
+justify-content: center;
+width: 100%;
+}
+.tab-btn {
+background: none;
+border: none;
+color: var(--text);
+padding: 0.8rem 2rem;
+font-size: 1.1rem;
+cursor: pointer;
+transition: all 0.4s;
+position: relative;
+white-space: nowrap;
+flex-shrink: 0; /* 防止按钮被压缩 */
+}
+.tab-btn.active, .tab-btn:hover {
+color: var(--accent);
+}
+.tab-btn.active::after {
+content: "";
+position: absolute;
+bottom: -1px;
+left: 0;
+right: 0;
+height: 3px;
+background: var(--accent);
+}
+.tab-content { 
+display: none; 
+padding: 40px 5% 60px;
+animation: fadeIn 0.8s ease-in-out;
+}
+.tab-content.active { display: block; }
+@keyframes fadeIn { 
+from {opacity:0; transform:translateY(20px);} 
+to {opacity:1; transform:none;} 
+}
+
+.container {
+max-width: 1200px;
+margin: 0 auto;
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+gap: 2rem;
+}
+.card {
+background: var(--card);
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+transition: transform 0.4s, box-shadow 0.4s;
+border: 1px solid var(--border);
+}
+.card:hover { 
+transform: translateY(-10px); 
+box-shadow: 0 15px 40px rgba(231,76,60,0.2);
+}
+.card h3 {
+background: linear-gradient(90deg, var(--accent), #c0392b);
+color: white;
+padding: 1rem;
+text-align: center;
+font-size: 1.4rem;
+}
+.card .avatar {
+height: 780px;
+background: #1a1f2e center/cover no-repeat;
+position: relative;
+}
+.card .info {
+padding: 1.5rem;
+line-height: 1.8;
+}
+.card .tag {
+display: inline-block;
+background: rgba(231,76,60,0.2);
+color: var(--accent);
+padding: 0.3rem 0.8rem;
+border-radius: 20px;
+font-size: 0.85rem;
+margin: 0.3rem 0.3rem 0.5rem 0;
+}
+.custom-panel {
+grid-column: 1/-1;
+background: var(--card);
+padding: 2.5rem;
+border-radius: 16px;
+border: 2px solid var(--accent);
+margin-top: 2rem;
+}
+.custom-panel h2 {
+text-align: center;
+font-size: 2rem;
+margin-bottom: 2rem;
+color: var(--accent);
+}
+.form-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 1.5rem;
+}
+.form-row {
+display: flex;
+gap: 1.5rem;
+flex-wrap: wrap;
+}
+.form-row .input-group {
+flex: 1;
+min-width: 250px;
+}
+.input-group {
+display: flex;
+flex-direction: column;
+}
+.input-group label {
+margin-bottom: 0.5rem;
+color: var(--snow);
+font-weight: bold;
+}
+.input-group input, .input-group textarea, .input-group select {
+padding: 0.9rem;
+border-radius: 8px;
+border: 1px solid var(--border);
+background: #1a1f2e;
+color: white;
+font-size: 1rem;
+transition: border-color 0.3s;
+}
+.input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+outline: none;
+border-color: var(--accent);
+}
+.input-group textarea { 
+resize: vertical; 
+min-height: 120px; 
+}
+.btn-copy {
+margin-top: 2rem;
+padding: 1rem 3rem;
+background: linear-gradient(90deg, var(--accent), #c0392b);
+color: white;
+border: none;
+border-radius: 50px;
+font-size: 1.2rem;
+cursor: pointer;
+transition: 0.3s;
+font-weight: bold;
+letter-spacing: 1px;
+}
+.btn-copy:hover { 
+background: linear-gradient(90deg, #c0392b, #a93226);
+transform: scale(1.05); 
+}
+
+footer {
+text-align: center;
+padding: 3rem 1rem;
+color: #666;
+font-size: 0.9rem;
+border-top: 1px solid var(--border);
+margin-top: 4rem;
+}
+footer a { 
+color: var(--accent); 
+text-decoration: none;
+transition: color 0.3s;
+}
+footer a:hover { 
+color: #ff6b6b; 
+text-decoration: underline;
+}
+
+/* 手机端响应式设计 */
+@media (max-width: 1024px) {
+.nav-tabs {
+overflow-x: auto; /* 允许水平滚动 */
+-webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
+justify-content: flex-start; /* 左对齐 */
+padding-left: 10px;
+padding-right: 10px;
+}
+.nav-tabs::-webkit-scrollbar {
+display: none; /* 隐藏滚动条但保留滚动功能 */
+}
+.nav-tabs {
+-ms-overflow-style: none; /* IE和Edge隐藏滚动条 */
+scrollbar-width: none; /* Firefox隐藏滚动条 */
+}
+.nav-tabs-container {
+width: auto; /* 容器宽度自适应内容 */
+min-width: 100%; /* 确保最小宽度为100% */
+justify-content: flex-start; /* 左对齐 */
+}
+}
+
+@media (max-width: 768px) {
+body {
+padding-top: 100px;
+}
+.header-bar {
+height: 100px;
+}
+.logo { 
+font-size: 2rem; 
+letter-spacing: 4px; 
+margin-bottom: 0.3rem;
+}
+.subtitle { 
+font-size: 0.9rem; 
+letter-spacing: 2px; 
+}
+.nav-tabs { 
+top: 100px;
+/* 在手机端移除flex-wrap，允许水平滚动 */
+flex-wrap: nowrap; 
+padding: 0.5rem 10px;
+justify-content: flex-start;
+}
+.tab-btn { 
+padding: 0.8rem 1.5rem; 
+font-size: 1rem;
+flex-shrink: 0; /* 防止按钮被压缩 */
+}
+.tab-content { 
+padding: 30px 20px 40px;
+}
+.card .avatar {
+height: 700px;
+}
+.custom-panel {
+padding: 1.5rem;
+}
+.btn-copy {
+width: 100%;
+padding: 1rem;
+}
+.form-row {
+flex-direction: column;
+gap: 1rem;
+}
+.form-row .input-group {
+min-width: 100%;
+}
+}
+
+@media (max-width: 480px) {
+.logo { font-size: 1.8rem; }
+.container {
+grid-template-columns: 1fr;
+}
+.tab-btn {
+padding: 0.8rem 1.2rem;
+font-size: 0.9rem;
+}
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+.nav-tabs {
+padding: 0.3rem 10px;
+}
+.tab-btn {
+padding: 0.6rem 1.2rem;
+font-size: 0.9rem;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+<div class="logo">天狼星<span>SIRIUS</span></div>
+<div class="subtitle">哨兵PMC · 战术小队档案</div>
+</div>
+
+<div class="nav-tabs">
+<div class="nav-tabs-container">
+<button class="tab-btn active" data-tab="tab-home">首页</button>
+<button class="tab-btn" data-tab="tab-world">世界观</button>
+<button class="tab-btn" data-tab="tab-members">队员档案</button>
+<button class="tab-btn" data-tab="tab-custom">角色卡配置</button>
+</div>
+</div>
+
+<div id="tab-home" class="tab-content active">
+<div style="text-align:center; padding:4rem 2rem; color:#bdc3c7;">
+<h1 style="font-size:3rem; color:var(--accent); margin-bottom:2rem;">「在灰色地带，我们是彼此唯一的家人。」</h1>
+<p style="margin-top:2rem; font-size:1.3rem; max-width:800px; margin-left:auto; margin-right:auto; line-height:1.8;">
+私营军事公司"哨兵"旗下最精锐的战术小队——<b style="color:var(--accent);">天狼星</b>。<br>
+在枪林弹雨与道德边缘之间，我们用鲜血与羁绊书写属于自己的故事。
+</p>
+</div>
+</div>
+
+<div id="tab-world" class="tab-content">
+<div style="max-width:900px; margin:0 auto; padding:2rem; line-height:2;">
+<h2 style="text-align:center; color:var(--accent); font-size:2.5rem; margin-bottom:2rem;">世界观 · 灰色边界</h2>
+<p style="margin-bottom:1.5rem; font-size:1.1rem;">2038年，常规战争已成过去式，国家将"暴力"外包给私人军火巨头。哨兵PMC便是其中最臭名昭著也最有效率的那一把刀。我们接下任何委托——只要价钱够高、理由够灰。</p>
+<p style="margin-bottom:1.5rem; font-size:1.1rem;">而天狼星小队，是哨兵内部唯一被允许"拒绝任务"的存在。因为我们的战损率是零，成功率是传说。</p>
+<p style="margin-bottom:1.5rem; font-size:1.1rem;">在冷酷的战术表象下，我们却像一家人一样吵闹、守护、互相舔舐伤口。这里有禁忌的恋爱，有不可告人的过去，有随时可能撕裂一切的秘密……</p>
+<div style="background:rgba(231,76,60,0.1); border-left:4px solid var(--accent); padding:1.5rem; margin-top:3rem; border-radius:0 8px 8px 0;">
+<p style="font-style:italic; color:var(--snow);">"我们不是英雄，也不是恶棍。我们只是在灰色地带生存的狼群。"</p>
+<p style="text-align:right; margin-top:1rem; color:var(--accent);">——雪野霞，天狼星小队队长</p>
+</div>
+</div>
+</div>
+
+<div id="tab-members" class="tab-content">
+<div class="container">
+
+<!-- 雪野霞 -->
+<div class="card">
+<h3>白狼 · 雪野霞</h3>
+<div class="avatar" style="background-image:url('https://cg-img.pornai.fun/account/2ff593c2-ba7d-4ec7-9218-5ecdfc202f2f.jpg')"></div>
+<div class="info">
+<span class="tag">队长</span><span class="tag">近战大师</span><span class="tag">冰雪美人</span>
+<p style="margin:1rem 0;"><strong>26岁｜172cm｜战术指挥官</strong></p>
+<p>"注意掩护……还有，回来我有话想对你说。"</p>
+<p style="margin-top:1rem; font-size:0.9rem; color:#95a5a6;">擅长战术指挥与近身格斗，表面冷酷但极度重视队友。</p>
+</div>
+</div>
+
+<!-- 莉莉丝 -->
+<div class="card">
+<h3>天使 · 莉莉丝</h3>
+<div class="avatar" style="background-image:url('https://cg-img.pornai.fun/account/54249d65-d1ce-4f7d-85d1-2036225be713.jpg')"></div>
+<div class="info">
+<span class="tag">医疗兵</span><span class="tag">黑客天才</span><span class="tag">队宠</span>
+<p style="margin:1rem 0;"><strong>外表14岁｜148cm｜医疗专家</strong></p>
+<p>"大哥哥～莉莉丝来帮你打针啦～一点都不痛哦～"</p>
+<p style="margin-top:1rem; font-size:0.9rem; color:#95a5a6;">天才黑客兼医疗专家，真实年龄成谜的小恶魔。</p>
+</div>
+</div>
+
+<!-- 堡垒 -->
+<div class="card">
+<h3>堡垒 · 马库斯·约翰逊</h3>
+<div class="avatar" style="background-image:url('https://catai.wiki/ad524588-9d19-4041-9e04-f7c5ab93cc00/mobile')"></div>
+<div class="info">
+<span class="tag">重火力</span><span class="tag">爆破专家</span><span class="tag">可靠大叔</span>
+<p style="margin:1rem 0;"><strong>42岁｜195cm｜火力支援</strong></p>
+<p>"小子，把后背交给我。"</p>
+<p style="margin-top:1rem; font-size:0.9rem; color:#95a5a6;">前海军陆战队成员，小队的坚实后盾和父辈角色。</p>
+</div>
+</div>
+
+<!-- 幽灵 -->
+<div class="card">
+<h3>幽灵 · 艾莉森·克罗夫特</h3>
+<div class="avatar" style="background-image:url('https://cg-img.pornai.fun/account/fdec9316-ef56-4da0-ad74-8a8d57d6cd05.jpg')"></div>
+<div class="info">
+<span class="tag">狙击手</span><span class="tag">追踪者</span><span class="tag">冰山美人</span>
+<p style="margin:1rem 0;"><strong>24岁｜175cm｜远程支援</strong></p>
+<p>"距离1800，风偏2.3……别死。"</p>
+<p style="margin-top:1rem; font-size:0.9rem; color:#95a5a6;">沉默寡言的狙击天才，能在2公里外精准命中目标。</p>
+</div>
+</div>
+
+<!-- 渡鸦 -->
+<div class="card">
+<h3>渡鸦 · 陈明轩</h3>
+<div class="avatar" style="background-image:url('https://cg-img.pornai.fun/account/75a019d3-c16a-4b01-8d00-e00840fff67c.jpg')"></div>
+<div class="info">
+<span class="tag">情报中枢</span><span class="tag">心理调解大师</span><span class="tag">最信赖的参谋</span>
+<p style="margin:1rem 0;"><strong>31岁｜183cm｜情报中枢</strong></p>
+<p>"间接影响?难保不会波及平民"</p>
+<p style="margin-top:1rem; font-size:0.9rem; color:#95a5a6;">前英国军情六处高级分析师，小队的情报中枢与心理调解员，深受信赖</p>
+</div>
+</div>
+
+</div>
+</div>
+
+<div id="tab-custom" class="tab-content">
+<div class="custom-panel">
+<h2>天狼星小队 · 专属角色卡配置</h2>
+<div class="form-grid">
+<!-- 第一行：基本资料 -->
+<div class="form-row">
+<div class="input-group">
+<label for="codename">你的代号</label>
+<input id="codename" type="text" placeholder="例：灰狐、Sirius-07">
+</div>
+<div class="input-group">
+<label for="gender">性别</label>
+<select id="gender">
+<option value="男">男</option>
+<option value="女">女</option>
+<option value="不透露">不透露</option>
+</select>
+</div>
+
+</div>
+
+<!-- 第二行：故乡-->
+<div class="form-row">
+<div class="input-group">
+<label for="hometown">故乡</label>
+<input id="hometown" type="text" placeholder="例：中国上海、美国纽约、俄罗斯莫斯科">
+</div>
+<div class="input-group">
+<label for="age">年龄</label>
+<input id="age" type="number" placeholder="例：25" min="18" max="60">
+</div>
+</div>
+
+<!-- 第三行：场景设定 -->
+<div class="input-group">
+<label for="scene">开场设定（场景/事件）</label>
+<textarea id="scene" placeholder="例：夜袭后并肩坐在装甲车顶看雪，抑制剂快耗尽的霞靠在你肩上微微发抖..."></textarea>
+</div>
+
+<!-- 第四行：额外设定 -->
+<div class="input-group">
+<label for="extra">额外设定（隐藏背景/特征/口癖等）</label>
+<textarea id="extra" placeholder="可以在这里写下你的专属秘密或特殊设定～"></textarea>
+</div>
+</div>
+<div style="text-align:center;">
+<button class="btn-copy" onclick="copySettings()">复制全部设定</button>
+<p style="margin-top:1rem; color:#e74c3c;" id="copyHint"></p>
+</div>
+</div>
+</div>
+
+<footer>
+<p style="margin-top:1rem;">© 2024 天狼星战术小队 · 哨兵PMC</p>
+</footer>
+
+<script>
+// 标签切换功能
+const tabs = document.querySelectorAll('.tab-btn');
+tabs.forEach(tab => {
+tab.addEventListener('click', () => {
+// 移除所有active类
+tabs.forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+// 添加当前active类
+tab.classList.add('active');
+document.getElementById(tab.dataset.tab).classList.add('active');
+
+// 滚动到顶部
+window.scrollTo({ top: 120, behavior: 'smooth' });
+});
+});
+
+// 复制设置功能
+function copySettings() {
+const fields = [
+{ id: 'codename', label: '代号' },
+{ id: 'gender', label: '性别' },
+{ id: 'age', label: '年龄' },
+{ id: 'hometown', label: '故乡' },
+{ id: 'scene', label: '开场设定' },
+{ id: 'extra', label: '额外设定' }
+];
+
+let text = "";
+
+fields.forEach(field => {
+const element = document.getElementById(field.id);
+if (element && element.value) {
+text += `${field.label}: ${element.value}\n`;
+}
+});
+
+
+// 复制到剪贴板
+navigator.clipboard.writeText(text).then(() => {
+const hint = document.getElementById('copyHint');
+hint.textContent = "✨ 复制成功！";
+hint.style.color = "#2ecc71";
+
+setTimeout(() => {
+hint.textContent = "";
+}, 3000);
+}).catch(err => {
+console.error('复制失败:', err);
+const hint = document.getElementById('copyHint');
+hint.textContent = "❌ 复制失败，请手动复制";
+hint.style.color = "#e74c3c";
+});
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+// 平滑滚动到锚点
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+anchor.addEventListener('click', function(e) {
+e.preventDefault();
+const targetId = this.getAttribute('href');
+if (targetId === '#') return;
+
+const targetElement = document.querySelector(targetId);
+if (targetElement) {
+window.scrollTo({
+top: targetElement.offsetTop - 120,
+behavior: 'smooth'
+});
+}
+});
+});
+});
+</script>
+</body>
+</html>

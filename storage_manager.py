@@ -233,6 +233,13 @@ class StorageManager:
         """检查CG文件是否存在"""
         return os.path.exists(self.get_cg_path(filename))
 
+    # ====== log 管理 ======
+    def info_log(self, filename: str, log_data: str) -> bool:
+        log_file = os.path.join(self.base_dir, 'logs', filename)
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(str(log_data) + '\n')
+        return True
+
 
 # 全局存储管理器实例
 storage_manager = StorageManager()

@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三体：黑暗森林</title>
+<link rel="preload" as="image" href="https://img.xiaoqikeji.com/image/PX5tJzR7AXHLbfbLE7UfjZ.jpg">
+<link rel="preconnect" href="https://img.xiaoqikeji.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap');
+:root {
+    --deep-blue: #0a1a2d;
+    --midnight-blue: #0c2441;
+    --electric-blue: #1a5fb4;
+    --crt-green: #90ee90;
+    --crt-glow: rgba(144, 238, 144, 0.7);
+    --text-primary: #e0f7ff;
+    --border-color: rgba(26, 95, 180, 0.5);
+    --title-font: 'Orbitron', sans-serif;
+    --body-font: 'Noto Sans SC', sans-serif;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: var(--body-font);
+    color: var(--text-primary);
+}
+body {
+    background-color: #000;
+    position: relative;
+    overflow-y: hidden;
+}
+body.main-menu-active {
+    overflow-y: auto;
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 30%, var(--midnight-blue) 70%);
+    pointer-events: none;
+    z-index: -1;
+    will-change: opacity;
+}
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    background-image: url('https://img.xiaoqikeji.com/image/PX5tJzR7AXHLbfbLE7UfjZ.jpg'); 
+    background-size: cover;
+    background-position: center;
+    z-index: 1000;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease-out, visibility 0.8s;
+    overflow: hidden;
+}
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+#splash-screen .enter-button {
+    position: relative;
+    z-index: 3;
+    font-size: 1.5em;
+    color: rgba(144, 238, 144, 0.7); 
+    text-shadow: 0 0 5px rgba(144, 238, 144, 0.5);
+    font-family: var(--title-font);
+    letter-spacing: 3px;
+    background-color: rgba(10, 26, 45, 0.4); 
+    padding: 20px 40px;
+    border-radius: 5px;
+    border: 1px solid rgba(144, 238, 144, 0.4);
+    cursor: pointer;
+    transition: all 0.5s ease;
+    animation: pulse 3s infinite;
+    text-align: center;
+    backdrop-filter: blur(2px);
+}
+#splash-screen .enter-button:hover {
+    background-color: rgba(10, 26, 45, 0.6);
+    border-color: var(--crt-green);
+    color: var(--crt-green);
+    box-shadow: 0 0 20px var(--crt-glow);
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.02); }
+}
+#prologue-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    background-size: cover;
+    background-position: center;
+    z-index: 1001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2em;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease-out, visibility 0.8s;
+    overflow: hidden;
+}
+#prologue-screen.active {
+    opacity: 1;
+    visibility: visible;
+}
+#prologue-background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.prologue-dialogue-box {
+    position: relative;
+    z-index: 10;
+    width: 90%;
+    max-width: 800px;
+    padding: 2em;
+    background-color: rgba(5, 15, 30, 0.9);
+    border: 2px solid #333;
+    box-shadow: 0 0 30px rgba(0, 60, 120, 0.5), inset 0 0 20px #000;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+.prologue-dialogue-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0, 255, 0, 0.05) 0px, rgba(0, 255, 0, 0.05) 1px, transparent 1px, transparent 3px);
+    pointer-events: none;
+    animation: scan 10s linear infinite;
+}
+@keyframes scan {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 20px; }
+}
+.prologue-text {
+    font-size: 2.2em;
+    line-height: 1.8;
+    min-height: 120px;
+    white-space: pre-wrap;
+    color: #a0ffa0;
+    text-align: center;
+    text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+    filter: blur(0.3px) contrast(1.2);
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.prologue-text::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
+}
+.prologue-text.finished::after {
+    content: '';
+}
+@keyframes blink {
+    50% { opacity: 0; }
+}
+.warning-text {
+    color: #ff5555;
+    font-weight: bold;
+    text-shadow: 0 0 10px #f00, 0 0 20px #f00;
+    font-size: 2.5em;
+    animation: warning-pulse 1.5s ease-in-out infinite;
+    filter: blur(0.4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+@keyframes warning-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+.title-display {
+    font-family: var(--title-font);
+    font-size: 3.5em;
+    color: #f0f0f0;
+    text-align: center;
+    letter-spacing: 0.3em;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 1.5s ease;
+    text-shadow: 
+        -2px -2px 0 #000,  
+        2px -2px 0 #000,
+        -2px  2px 0 #000,
+        2px  2px 0 #000,
+        0 0 25px var(--crt-glow);
+    white-space: pre-wrap;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.title-display.show {
+    opacity: 1;
+    transform: scale(1);
+}
+.title-display .title-en {
+    display: block;
+    font-size: 0.8em;
+    letter-spacing: 0.4em;
+    margin-top: 10px;
+}
+.prologue-input-container {
+    margin-top: 20px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.prologue-input-container.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.prologue-input-container button {
+    margin-top: 10px;
+    padding: 12px 35px;
+    background: rgba(26, 95, 180, 0.3);
+    border: 1px solid rgba(144, 238, 144, 0.7);
+    border-radius: 5px;
+    color: var(--crt-green);
+    font-family: var(--title-font);
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.prologue-input-container button:hover {
+    background: rgba(144, 238, 144, 0.2);
+    border-color: var(--crt-green);
+    box-shadow: 0 0 15px var(--crt-glow);
+}
+.skip-hint {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: #888;
+    font-size: 0.9em;
+    z-index: 20;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: 1px solid rgba(136, 136, 136, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.skip-hint:hover {
+    color: var(--crt-green);
+    border-color: var(--crt-green);
+}
+.poster-header {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 800px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, #000 0%, var(--deep-blue) 70%, var(--midnight-blue) 100%);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+#starfield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+.poster-title-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+    margin-top: -100px;
+}
+.main-title {
+    font-family: var(--title-font);
+    font-size: clamp(8rem, 20vw, 12rem);
+    font-weight: 900;
+    color: transparent;
+    background: linear-gradient(135deg, 
+        #ffffff 0%, 
+        var(--crt-green) 25%, 
+        var(--electric-blue) 50%, 
+        #ffd700 75%, 
+        #ffffff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    line-height: 1;
+    display: inline-block;
+    animation: titleGradient 8s ease-in-out infinite,
+               titleFloat 6s ease-in-out infinite;
+    text-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.1),
+        0 2px 0 rgba(255, 255, 255, 0.05),
+        0 3px 0 rgba(0, 0, 0, 0.2),
+        0 4px 0 rgba(0, 0, 0, 0.2),
+        0 5px 0 rgba(0, 0, 0, 0.2),
+        0 6px 1px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(0, 0, 0, 0.2),
+        0 1px 5px rgba(0, 0, 0, 0.4),
+        0 3px 8px rgba(0, 0, 0, 0.2),
+        0 5px 15px rgba(0, 0, 0, 0.3),
+        0 10px 15px rgba(0, 0, 0, 0.3),
+        0 20px 25px rgba(0, 0, 0, 0.2),
+        0 0 30px rgba(26, 95, 180, 0.4),
+        0 0 50px rgba(144, 238, 144, 0.3),
+        0 0 70px rgba(26, 95, 180, 0.2),
+        0 0 90px rgba(144, 238, 144, 0.1);
+    margin-bottom: 20px;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+@keyframes titleGradient {
+    0%, 100% { 
+        background-position: 0% 50%;
+        filter: brightness(1) contrast(1.1);
+    }
+    50% { 
+        background-position: 100% 50%;
+        filter: brightness(1.2) contrast(1.2);
+    }
+}
+@keyframes titleFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.03); }
+}
+.title-sub {
+    font-family: var(--title-font);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 400;
+    color: #c0c0c0;
+    letter-spacing: 0.6em;
+    margin-top: 20px;
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 15px rgba(192, 192, 192, 0.7),
+        0 0 25px rgba(26, 95, 180, 0.5),
+        0 0 35px rgba(144, 238, 144, 0.3);
+    animation: subtitleGlow 4s ease-in-out infinite alternate;
+    position: relative;
+    display: block;
+    text-align: center;
+    margin-left: 0.6em; 
+}
+@keyframes subtitleGlow {
+    0% { 
+        opacity: 0.8;
+        text-shadow: 
+            0 0 10px rgba(192, 192, 192, 0.5),
+            0 0 20px rgba(26, 95, 180, 0.3);
+    }
+    100% { 
+        opacity: 1;
+        text-shadow: 
+            0 0 20px rgba(192, 192, 192, 0.9),
+            0 0 30px rgba(26, 95, 180, 0.6),
+            0 0 40px rgba(144, 238, 144, 0.4);
+    }
+}
+.scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--crt-green);
+    font-family: var(--title-font);
+    font-size: 1rem;
+    letter-spacing: 2px;
+    animation: bounce 2s infinite;
+    z-index: 2;
+    opacity: 0.8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+    40% { transform: translateY(-10px) translateX(-50%); }
+    60% { transform: translateY(-5px) translateX(-50%); }
+}
+.scroll-hint::after {
+    content: '▼';
+    display: block;
+    margin-top: 10px;
+    font-size: 1.2rem;
+}
+.content-wrapper {
+    position: relative;
+    width: 100%;
+    background-color: rgba(10, 26, 45, 0.95);
+    background-image: 
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(144, 238, 144, 0.03) 2px, rgba(144, 238, 144, 0.03) 4px);
+    z-index: 1;
+    padding: 40px 20px;
+    margin-top: 0;
+    display: none;
+}
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.tab-button {
+    padding: 12px 25px;
+    font-family: var(--title-font);
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    color: #b0e0ff;
+    background: linear-gradient(to bottom, var(--midnight-blue), var(--deep-blue));
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+.tab-button:hover {
+    background: linear-gradient(to bottom, var(--electric-blue), var(--midnight-blue));
+    color: #fff;
+    border-color: var(--crt-green);
+    box-shadow: 0 0 15px var(--crt-glow);
+}
+.tab-button.active {
+    background: linear-gradient(to bottom, var(--electric-blue), var(--midnight-blue));
+    color: #fff;
+    border-color: var(--crt-green);
+    box-shadow: 0 0 15px var(--crt-glow);
+}
+.tab-content {
+    display: none;
+    width: 100%;
+    max-width: 1200px;
+    background-color: rgba(12, 36, 65, 0.85);
+    border: 1px solid var(--border-color);
+    padding: 20px 30px;
+    border-radius: 8px;
+    animation: fadeIn 0.5s ease;
+    box-shadow: 0 0 25px rgba(26, 95, 180, 0.2);
+    margin-left: auto;
+    margin-right: auto;
+}
+.tab-content.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.tab-content h2 {
+    font-family: var(--title-font);
+    color: var(--crt-green);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    font-size: clamp(1.8rem, 4vw, 2.2rem);
+}
+.tab-content h3 {
+    font-family: var(--title-font);
+    color: var(--electric-blue);
+    margin-top: 25px;
+    margin-bottom: 15px;
+    font-size: clamp(1.3rem, 3vw, 1.5rem);
+}
+.tab-content p, .tab-content ul, .tab-content li {
+    line-height: 1.8;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+.tab-content ul {
+    padding-left: 20px;
+}
+.tab-content strong {
+    color: var(--crt-green);
+    font-weight: 700;
+}
+.timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-top: 30px;
+}
+.era-card {
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.era-card:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 20px rgba(144, 238, 144, 0.2);
+    transform: translateY(-2px) translateZ(0);
+}
+.era-card h3 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 0;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+}
+.era-tag {
+    background: linear-gradient(to right, var(--electric-blue), var(--midnight-blue));
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 1rem;
+    color: white;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+.era-card img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    margin: 15px 0;
+    display: block;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    padding: 5px;
+}
+.era-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+.detail-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 5px;
+    border-left: 3px solid var(--crt-green);
+}
+.detail-item strong {
+    color: var(--electric-blue);
+    display: block;
+    margin-bottom: 5px;
+}
+.characters-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+.character-card {
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+.character-card:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 20px rgba(144, 238, 144, 0.2);
+    transform: translateY(-3px) translateZ(0);
+}
+.character-img {
+    width: 100%;
+    height: 380px;
+    object-fit: contain;
+    object-position: center;
+    border-bottom: 2px solid var(--border-color);
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, rgba(10, 26, 45, 0.95), rgba(12, 36, 65, 0.95));
+}
+.character-card:hover .character-img {
+    transform: scale(1.03);
+    transition: transform 0.2s ease;
+}
+@media (max-width: 768px) {
+    .character-img {
+        height: 300px;
+    }
+}
+.character-info {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.character-info h4 {
+    font-family: var(--title-font);
+    color: var(--crt-green);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.character-tag {
+    background: rgba(255, 85, 85, 0.2);
+    color: #ffaaaa;
+    font-size: 0.8rem;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: normal;
+}
+.character-quote {
+    font-style: italic;
+    color: #aaa;
+    border-left: 2px solid var(--electric-blue);
+    padding-left: 10px;
+    margin: 10px 0;
+}
+.character-desc {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    flex-grow: 1;
+}
+.concepts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-top: 30px;
+}
+.concept-card {
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.concept-card:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 20px rgba(144, 238, 144, 0.2);
+}
+.concept-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.concept-img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid rgba(144, 238, 144, 0.3);
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+.concept-text h4 {
+    font-family: var(--title-font);
+    color: var(--crt-green);
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+}
+.concept-type {
+    color: var(--electric-blue);
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.concept-body {
+    line-height: 1.7;
+}
+.concept-body strong {
+    color: var(--electric-blue);
+}
+.trisolaris-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 30px;
+}
+.trisolaris-section {
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 8px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.trisolaris-section:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.1);
+}
+.trisolaris-img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    margin: 20px 0;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    display: block;
+}
+.phenomena-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+.phenomenon-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 3px solid var(--electric-blue);
+}
+.phenomenon-item h4 {
+    color: var(--crt-green);
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+#character-creation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+.class-card {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.4s ease;
+    height: 350px;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.class-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
+}
+.class-card .class-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--title-font);
+    font-size: 1.8rem;
+    color: #fff;
+    text-shadow: 0 2px 10px #000, 0 0 20px #000;
+    opacity: 0;
+    transition: all 0.4s ease;
+    padding: 15px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    transform: translateY(20px);
+}
+.class-card:hover img {
+    transform: scale(1.03);
+}
+.class-card:hover .class-name {
+    opacity: 1;
+    transform: translateY(0);
+}
+.class-card:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 30px var(--crt-glow);
+}
+.class-card.custom-card {
+    grid-column: span 2;
+    height: 400px;
+    background: linear-gradient(135deg, rgba(20, 40, 70, 0.8), rgba(10, 26, 45, 0.9));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px dashed var(--border-color);
+}
+.class-card.custom-card:hover {
+    border-color: var(--crt-green);
+    background: linear-gradient(135deg, rgba(20, 40, 70, 0.9), rgba(10, 26, 45, 0.95));
+}
+/* 自定义角色卡片图片样式 */
+.class-card.custom-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+/* 与其他卡片完全一致的文字样式 */
+.class-card.custom-card .class-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--title-font);
+    font-size: 1.8rem;
+    color: #fff; /* 白色 */
+    text-shadow: 0 2px 10px #000, 0 0 20px #000;
+    opacity: 0;
+    transition: all 0.4s ease;
+    padding: 15px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    transform: translateY(20px);
+}
+/* 隐藏描述文字，只显示标题 */
+.class-card.custom-card .class-desc {
+    display: none;
+}
+/* 悬停效果与其他卡片一致 */
+.class-card.custom-card:hover img {
+    transform: scale(1.03);
+}
+.class-card.custom-card:hover .class-name {
+    opacity: 1;
+    transform: translateY(0);
+}
+.class-card.custom-card:hover {
+    border-color: var(--crt-green);
+    box-shadow: 0 0 30px var(--crt-glow);
+}
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .class-card.custom-card {
+        grid-column: span 2;
+        height: 300px;
+    }
+    .class-card.custom-card .class-name {
+        font-size: 1.8rem;
+    }
+}
+@media (max-width: 480px) {
+    .class-card.custom-card {
+        grid-column: span 1;
+        height: 300px;
+    }
+}
+@media (max-width: 768px) {
+    .class-card.custom-card {
+        grid-column: span 1;
+        height: 350px;
+    }
+    .class-card.custom-card .class-name {
+        font-size: 1.8rem;
+    }
+}
+#class-details {
+    display: none;
+    background: rgba(20, 40, 70, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 20px;
+}
+.config-container h3 {
+    text-align: center;
+}
+.config-container {
+    margin-top: 30px;
+    padding: 25px;
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 8px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--electric-blue);
+    font-weight: bold;
+}
+.form-group input[type="text"], .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--body-font);
+    font-size: 16px;
+}
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+.faction-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+}
+.faction-options label {
+    margin-right: 20px;
+    font-weight: normal;
+    cursor: pointer;
+}
+.faction-options input {
+    margin-right: 8px;
+    cursor: pointer;
+}
+.faction-display {
+    background: rgba(0,0,0,0.3);
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    margin-top: 10px;
+    font-weight: bold;
+    color: var(--crt-green);
+}
+.preview-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(20, 40, 70, 0.6);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    min-height: 150px;
+    font-size: 15px;
+    line-height: 1.7;
+    font-family: monospace;
+}
+#copy-button, #character-config-form button[type="submit"] {
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    margin: 20px auto 0;
+    padding: 14px 25px;
+    font-family: var(--title-font);
+    font-size: 1.1rem;
+    color: #fff;
+    background: linear-gradient(to bottom, var(--midnight-blue), var(--deep-blue));
+    border: 1px solid var(--electric-blue);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+#copy-button:hover, #character-config-form button[type="submit"]:hover {
+    background: linear-gradient(to bottom, var(--electric-blue), var(--midnight-blue));
+    border-color: var(--crt-green);
+    color: #fff;
+    box-shadow: 0 0 15px var(--crt-glow);
+}
+.about-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.about-quote {
+    font-size: 1.2em;
+    text-align: center;
+    color: var(--crt-green);
+    margin: 30px 0;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.works-list {
+    padding-top: 0.8em;
+}
+.works-category {
+    margin-bottom: 1.5em;
+    padding: 15px;
+    background: rgba(20, 40, 70, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(64, 158, 255, 0.2);
+}
+.works-category h4 {
+    font-size: clamp(1.2em, 3.5vw, 1.4em);
+    color: var(--crt-green);
+    margin-bottom: 0.8em;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 0.4em;
+    font-family: var(--title-font);
+    letter-spacing: 1px;
+}
+.work-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75em;
+}
+.work-btn {
+    display: inline-block;
+    padding: 0.6em 1em;
+    background-color: rgba(20, 40, 70, 0.6);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: clamp(0.8em, 3vw, 0.9em);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-family: var(--body-font);
+}
+.work-btn:hover {
+    background-color: rgba(26, 95, 180, 0.7);
+    border-color: var(--crt-green);
+    color: #fff;
+    box-shadow: 0 0 15px var(--crt-glow);
+    transform: translateY(-2px);
+}
+.work-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.about-warning-text {
+    text-align: center;
+    margin-top: 40px;
+    color: #ff5555;
+    font-size: 2em;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 85, 85, 0.8);
+    animation: warning-pulse 1.5s ease-in-out infinite;
+    filter: blur(0.4px);
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-content {
+    background: rgba(12, 36, 65, 0.95);
+    padding: 30px 40px;
+    border-radius: 8px;
+    border: 1px solid var(--crt-green);
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 25px var(--crt-glow);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    max-width: 500px;
+}
+.modal-overlay.visible .modal-content {
+    transform: scale(1);
+}
+.modal-content p {
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+.modal-content input {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--body-font);
+    margin-bottom: 15px;
+    text-align: center;
+}
+.modal-close-btn {
+    padding: 10px 30px;
+    background: var(--midnight-blue);
+    color: #fff;
+    border: 1px solid var(--electric-blue);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 5px;
+}
+.modal-close-btn:hover {
+    background: var(--electric-blue);
+    border-color: var(--crt-green);
+}
+footer {
+    margin-top: 40px;
+    padding: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8em;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(74, 157, 236, 0.2);
+    width: 100%;
+}
+footer a {
+    color: rgba(144, 238, 144, 0.7);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+footer a:hover {
+    color: var(--crt-green);
+}
+#music-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    background-color: var(--midnight-blue);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+#music-toggle-btn:hover {
+    background-color: var(--electric-blue);
+    color: #fff;
+    border-color: var(--crt-green);
+}
+@media (max-width: 768px) {
+    .characters-container {
+        grid-template-columns: 1fr;
+    }
+    .concept-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    .concept-img {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+    }
+    #character-creation-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .class-card {
+        height: 250px;
+    }
+    .class-card.custom-card {
+        grid-column: span 2;
+        height: 300px;
+    }
+    .prologue-text {
+        font-size: 1.8em;
+    }
+    .title-display {
+        font-size: 2.5em;
+    }
+    .main-title {
+        font-size: clamp(5rem, 15vw, 8rem);
+    }
+    .title-sub {
+        font-size: clamp(1rem, 3vw, 1.8rem);
+        letter-spacing: 0.3em;
+    }
+    .poster-header {
+        min-height: 600px;
+    }
+    .era-details {
+        grid-template-columns: 1fr;
+    }
+    .phenomena-grid {
+        grid-template-columns: 1fr;
+    }
+    .faction-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .work-buttons {
+        flex-direction: column;
+    }
+    .work-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+@media (max-width: 480px) {
+    .tabs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .tab-button {
+        width: 100%;
+    }
+    .prologue-dialogue-box {
+        padding: 1.5em;
+    }
+    .prologue-input-container button {
+        width: 95%;
+    }
+    .main-title {
+        font-size: clamp(4rem, 12vw, 6rem);
+    }
+    .poster-header {
+        min-height: 500px;
+    }
+    #character-creation-grid {
+        grid-template-columns: 1fr;
+    }
+    .class-card {
+        height: 300px;
+    }
+    .class-card.custom-card {
+        grid-column: span 1;
+        height: 300px;
+    }
+}
+.crt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 6px 100%;
+    animation: flicker 0.8s infinite;
+    will-change: opacity;
+}
+@keyframes flicker {
+    0%, 20%, 40%, 60%, 80%, 100% { opacity: 0.97; }
+    10%, 30%, 50%, 70%, 90% { opacity: 0.99; }
+}
+</style>
+</head>
+<body>
+<div class="crt-overlay"></div>
+<audio id="bg-music" loop>
+<source src="https://honganwangshi-1392676847.cos.ap-beijing.myqcloud.com/%E7%86%8A%E9%94%AE%20-%20%E7%BA%A2%E5%B2%B8%E5%BE%80%E4%BA%8B%20Before%20We%20Leave%20the%20Earth_converted.mp3" type="audio/mpeg">
+您的浏览器不支持音频元素。
+</audio>
+<button id="music-toggle-btn">🔇</button>
+<div id="splash-screen">
+    <div class="enter-button">点击进入黑暗森林</div>
+</div>
+<div id="prologue-screen">
+<canvas id="prologue-background-canvas"></canvas>
+<div class="prologue-dialogue-box">
+<div class="prologue-text" id="prologue-text"></div>
+<div class="prologue-input-container" id="prologue-input-container">
+<button id="prologue-reply-confirm">超级"背叛"</button>
+</div>
+<div class="title-display" id="title-display"></div>
+</div>
+<div class="skip-hint" id="skip-hint">跳过剧情 ></div>
+</div>
+<div class="poster-header">
+    <canvas id="starfield"></canvas>
+    <div class="poster-title-container">
+        <h1 class="main-title">三体</h1>
+        <span class="title-sub">THE THREE-BODY PROBLEM</span>
+    </div>
+    <div class="scroll-hint">向下探索</div>
+</div>
+<div class="content-wrapper">
+    <div class="tabs">
+        <button class="tab-button active" data-tab="worldview">世界观概览</button>
+        <button class="tab-button" data-tab="timeline">详细时间线</button>
+        <button class="tab-button" data-tab="characters">主要人物</button>
+        <button class="tab-button" data-tab="trisolaris">三体世界</button>
+        <button class="tab-button" data-tab="concepts">科幻概念</button>
+        <button class="tab-button" data-tab="creation">身份选择</button>
+        <button class="tab-button" data-tab="about">关于《三体》</button>
+        <button class="tab-button" data-tab="recommendations">作品推荐</button>
+    </div>
+    <div id="worldview" class="tab-content active">
+        <h2>三体世界观：文明存亡的终极博弈</h2>
+        <img src="https://img.xiaoqikeji.com/image/MgJ9DW8Xwc4V9xwz3XFHc6.jpg" alt="巨大的圆形事物 与人物黑色背影" class="trisolaris-img">
+        <p>《三体》系列描绘了地球文明与三体文明之间跨越四个世纪的接触、冲突与博弈，最终扩展到整个宇宙尺度上的文明生存之战。故事始于一次偶然的星际通讯，终结于宇宙的终极命运。</p>
+        <h3>【核心冲突】</h3>
+        <p><strong>地球文明 vs 三体文明：</strong> 距离地球4光年的半人马座α星存在一个三恒星系统，其行星"三体世界"气候极端混乱，文明在"恒纪元"与"乱纪元"的交替中不断毁灭与重生。为了寻找稳定的家园，三体文明决定入侵地球。</p>
+        <p><strong>技术爆炸与生存危机：</strong> 三体人由于"智子"锁死地球基础科学，获得了巨大的技术优势。但人类"技术爆炸"的潜力让三体人感到恐惧，这是两个文明博弈的核心变量。</p>
+        <h3>【核心组织】</h3>
+        <ul>
+            <li><strong>地球三体组织 (ETO)</strong>：由叶文洁创立的人类背叛组织，分为希望三体人降临清洗人类的"降临派"、试图帮助三体解决科学问题的"拯救派"，以及只求个人生存的"幸存派"。</li>
+            <li><strong>行星防御理事会 (PDC)</strong>：联合国成立的全球性机构，负责统筹地球对抗三体入侵的所有战略与资源，主导了面壁计划等关键行动。</li>
+            <li><strong>星舰地球</strong>：末日战役后，由章北海等带领逃离太阳系的人类舰队组成的新文明，在宇宙中延续人类火种。</li>
+        </ul>
+        <h3>【核心思想】</h3>
+        <p><strong>"给岁月以文明，而不是给文明以岁月"：</strong> 这句话出自大低谷时期后的纪念碑，代表着人类在生存危机中重新确立的价值观——文明的质量与尊严比单纯的物种延续更重要。</p>
+        <p><strong>"失去人性，失去很多；失去兽性，失去一切"：</strong> 维德的名言，代表了在残酷宇宙中生存所需的决绝态度，与程心代表的道德人性形成鲜明对比。</p>
+    </div>
+    <div id="timeline" class="tab-content">
+        <h2>《三体》全纪元时间线</h2>
+        <p>以下是根据《三体》三部曲整理的完整时间线与重大事件，涵盖了从魔法时代到宇宙归零的完整历程。</p>
+        <div class="timeline-container">
+            <div class="era-card">
+                <h3><span class="era-tag">魔法时代</span> 公元1453年</h3>
+                <img src="https://img.xiaoqikeji.com/image/ASfv7FDkLPd2bF6H3QB6JO.jpg" alt="太空图，可以是黑暗森林">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>高维碎片（"魔法"）短暂接触地球。拜占庭学者狄奥伦娜借助高维空间能力尝试刺杀苏丹失败，君士坦丁堡陷落。碎片随后离开地球。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关联概念</strong>
+                        <p>四维碎片、高维空间</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">黄金时代</span> 约1960s-2007年</h3>
+                <img src="https://img.xiaoqikeji.com/image/qPnNRCTz7jXXQsXCKY5aGU.jpg" alt="彩色发射信号天线与叶文洁背影">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• 叶文洁在红岸基地首次发现太阳可作为星际通信放大器。<br>
+                           • 1979年收到三体世界1379号监听员警告："不要回答！"<br>
+                           • 叶文洁回复信息，邀请三体文明降临。<br>
+                           • 地球三体组织(ETO)成立。<br>
+                           • "古筝计划"消灭降临派，人类获得三体交流信息。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>叶文洁、汪淼、史强、伊文斯、1379号监听员</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>红岸计划、智子（锁死科学）、三体游戏、古筝计划（飞刃）</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">危机纪元</span> 2007年-2208年</h3>
+                <img src="https://img.xiaoqikeji.com/image/gszeCdLAzDjx6einJWNSpl.jpg" alt="对话">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• "面壁计划"启动，罗辑等四人被选为面壁者。<br>
+                           • "阶梯计划"将云天明的大脑送往三体舰队。<br>
+                           • 罗辑领悟"黑暗森林法则"，向太空发送"咒语"。<br>
+                           • "大低谷"时期：全球动荡，人口从83亿锐减至35亿。<br>
+                           • 末日战役："水滴"摧毁人类太空舰队。<br>
+                           • 罗辑建立"黑暗森林威慑"，三体舰队转向。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>罗辑、章北海、云天明、希恩斯、雷迪亚兹、泰勒</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>面壁计划、破壁人、思想钢印、阶梯计划、水滴、黑暗森林威慑、雪地工程</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">威慑纪元</span> 2208年-2270年</h3>
+                <img src="https://img.xiaoqikeji.com/image/opDyZ2V23yIBgk1McakKh1.jpg" alt="星舰">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• 罗辑担任第一任"执剑人"，维持与三体的战略平衡。<br>
+                           • 程心接任第二任执剑人。<br>
+                           • 接任后仅十五分钟，水滴攻击引力波发射器，威慑终止。<br>
+                           • "蓝色空间"号与"万有引力"号进入四维空间，启动宇宙广播。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>程心、罗辑、托马斯·维德、褚岩（"蓝色空间"号舰长）</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>执剑人、引力波宇宙广播、四维空间、黑暗森林打击</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">广播纪元</span> 2272年-2332年</h3>
+                <img src="https://img.xiaoqikeji.com/image/IIQr5VLvAp1RD2mBOLb9wL.jpg" alt="星轮" class="character-img">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• 三体星系坐标被广播后，遭"光粒"打击摧毁。<br>
+                           • 云天明通过三个童话向人类传递技术情报（曲率驱动、黑域）。<br>
+                           • 人类启动"掩体计划"，在木星等气态行星背面建造太空城。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>云天明、程心、艾AA、毕云峰</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>光粒打击、掩体计划、曲率驱动、黑域/光墓、云天明的童话</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">掩体纪元</span> 2333年-2400年</h3>
+                <img src="https://img.xiaoqikeji.com/image/Ihh2mjgzSOmnouowztNdCV.jpg" alt="降维打击">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• 维德领导的星环城独立，致力于研发光速飞船，被程心制止。<br>
+                           • 歌者文明向太阳系发射"二向箔"。<br>
+                           • 太阳系被二维化，仅有程心与艾AA乘坐唯一的光速飞船"星环"号逃离。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>程心、艾AA、托马斯·维德、罗辑、白Ice、歌者</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>二向箔、降维打击、歌者文明、光速飞船、曲率航迹、死线</p>
+                    </div>
+                </div>
+            </div>
+            <div class="era-card">
+                <h3><span class="era-tag">银河纪元以后</span> 公元2400年后</h3>
+                <img src="https://img.xiaoqikeji.com/image/oukOkpefIi5Xfx68L77Ahy.jpg" alt="最后的人类和金鱼生态球">
+                <div class="era-details">
+                    <div class="detail-item">
+                        <strong>核心事件</strong>
+                        <p>• 程心与关一帆在DX3906星系（蓝星）相遇。<br>
+                           • 进入"647号小宇宙"，收到"归零者"的宇宙回归运动广播。<br>
+                           • 程心决定归还小宇宙的质量，参与宇宙重启。</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>关键角色</strong>
+                        <p>程心、关一帆、智子（机器人）、归零者</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>科幻概念</strong>
+                        <p>小宇宙、宇宙归零运动、十维田园时代、质量守恒</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="characters" class="tab-content">
+        <h2>主要人物介绍</h2>
+        <p>《三体》中的角色在宏大的历史背景下做出关键选择，推动了文明的命运走向。</p>
+        <div class="characters-container">
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/YufdksICfYs7uwUpdaosWD.jpg" alt="叶文洁" class="character-img">
+                <div class="character-info">
+                    <h4>叶文洁 <span class="character-tag">ETO统帅</span></h4>
+                    <p class="character-quote">"我点燃了火，却控制不了它。"</p>
+                    <p class="character-desc">清华大学天体物理学教授，前红岸基地成员。在文革中目睹父亲惨死，对人性彻底绝望。她发现了太阳的增益反射效应，并首次与三体文明建立联系，回复了"到这里来吧"的信息，成为地球三体组织的创始人。她的行为是《三体》所有故事的起点。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/eJd7yi7WFbRRh51Vb36nGw.jpg" alt="汪淼" class="character-img">
+                <div class="character-info">
+                    <h4>汪淼 <span class="character-tag">纳米材料科学家</span></h4>
+                    <p class="character-quote">"物理学不存在了。"</p>
+                    <p class="character-desc">国家纳米科学中心首席科学家，研究纳米材料"飞刃"。他是第一个接触"科学边界"组织的科学家，也是最早发现"宇宙闪烁"异常现象的人。通过参与"三体游戏"，他逐渐了解了三体文明的存在，并在"古筝计划"中提供了关键的纳米材料技术，成功截获了审判日号上的三体信息。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/0lBzyXWyYSf2CgKZ5cwbAF.jpg" alt="罗辑" class="character-img">
+                <div class="character-info">
+                    <h4>罗辑 <span class="character-tag">面壁者 / 执剑人</span></h4>
+                    <p class="character-quote">"我对三体世界说话。"</p>
+                    <p class="character-desc">最初是社会学者和花花公子，被意外选为面壁者。在叶文洁的启发下，领悟并建立了"黑暗森林"威慑理论，成功迫使三体舰队转向。担任执剑人54年，守护了两个世界的和平。他是唯一一个既作为面壁者取得战略成功，又作为执剑人完成使命的角色。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/iEGkfLE3y6giV4cZhmKnEr.jpg" alt="大史" class="character-img">
+                <div class="character-info">
+                    <h4>史强 <span class="character-tag">警察 / 作战中心警官</span></h4>
+                    <p class="character-quote">"邪乎到家必有鬼。"</p>
+                    <p class="character-desc">经验丰富的警察，作战中心警官。在"科学边界"事件中保护汪淼，提出了"古筝计划"摧毁"审判日"号，获取三体组织的资料。他思维敏锐，不拘一格，多次在关键时刻保护罗辑。代表了普通人在超现实危机中的实用主义和生存智慧。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/jYNSqNX9Xov5YrelvI0OXc.jpg" alt="程心年代" class="character-img">
+                <div class="character-info">
+                    <h4>程心 <span class="character-tag">执剑人 / 星环公司总裁</span></h4>
+                    <p class="character-quote">"我想让人类活下去，无论付出什么代价。"</p>
+                    <p class="character-desc">航天发动机专业博士，云天明送给她一颗星星（DX3906）。她两次处于决定人类命运的位置：第一次作为执剑人，因内心的爱与仁慈放弃威慑，导致人类失去威慑优势；第二次作为星环公司总裁，制止维德研发光速飞船，使人类错失最后的逃生机会。她是人性与道德的化身，也是争议最大的角色。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/opDyZ2V23yIBgk1McakKh1.jpg" alt="舰队文明" class="character-img">
+                <div class="character-info">
+                    <h4>章北海 <span class="character-tag">太空军政委</span></h4>
+                    <p class="character-quote">"没关系的，都一样。"</p>
+                    <p class="character-desc">中国太空军政委，坚定的"逃亡主义者"。他预见了人类舰队在末日战役中的必然失败，并秘密策划劫持"自然选择"号战舰逃离太阳系，为人类文明保存了唯一的火种。他的行动直接导致了"星舰地球"的形成，展现了为延续文明而不择手段的决绝。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/LffTEb3HKr6NmMejGSvoon.jpg" alt="云天明的三个童话故事" class="character-img">
+                <div class="character-info">
+                    <h4>云天明 <span class="character-tag">阶梯计划执行者</span></h4>
+                    <p class="character-quote">"一个人献给宇宙的浪漫。"</p>
+                    <p class="character-desc">身患绝症的大学生，匿名购买一颗恒星（DX3906）送给暗恋的程心。后大脑被选中执行"阶梯计划"，送往三体舰队。在三体世界中存活下来，并成功通过三个隐喻丰富的童话故事，向人类传递了关于曲率驱动、黑域等关键科技的情报。他对程心的爱是跨越时空的史诗。</p>
+                </div>
+            </div>
+            <div class="character-card">
+                <img src="https://img.xiaoqikeji.com/image/ftQ9o5MHsZ5qaL5yCnb5YR.jpg" alt="智子人形态" class="character-img">
+                <div class="character-info">
+                    <h4>智子 <span class="character-tag">三体监视器 / 人类形态</span></h4>
+                    <p class="character-quote">"我是智子，三体世界驻地球的大使。"</p>
+                    <p class="character-desc">三体文明制造的多维展开质子计算机，以绝美的日本女性形象出现。她可以同时存在于多个地方，实时监控地球并锁死人类的基础科学。在威慑纪元后，她作为三体世界与人类交流的使者，后期成为程心的助手和朋友，展现了超越文明立场的复杂性。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="trisolaris" class="tab-content">
+        <h2>三体世界：混乱星系的生存史诗</h2>
+        <div class="trisolaris-container">
+            <div class="trisolaris-section">
+                <h3>三体游戏</h3>
+                <img src="https://img.xiaoqikeji.com/image/WxLxbJf4ZppIZuZv2e1vty.jpg" alt="彩色发射台" class="trisolaris-img">
+                <p><strong>三体游戏</strong>是ETO（地球三体组织）开发的一款沉浸式虚拟现实游戏，用于筛选和招募潜在成员。玩家在游戏中扮演三体文明的观察者或参与者，亲身体验三体世界的混乱与残酷。</p>
+                <p>游戏通过V装具接入，记录玩家的视网膜特征，模拟三体世界的极端环境。玩家在游戏中会遭遇"三日凌空"、"飞星不动"、"乱纪元"等各种天文灾难，并见证三体文明在毁灭与重生中艰难前行。</p>
+                <p>游戏的真实目的是筛选出对人类文明失望、能够理解并接受三体文明的"同志"。通过游戏，ETO成功招募了汪淼等科学家，并传播了三体文明的信息。</p>
+            </div>
+            <div class="trisolaris-section">
+                <h3>三体世界特有现象</h3>
+                <p>三体星系（半人马座α星）是一个由三颗恒星组成的混沌系统，其行星"三体世界"上的气候和环境极度不稳定，产生了许多地球无法想象的奇特现象：</p>
+                <div class="phenomena-grid">
+                    <div class="phenomenon-item">
+                        <h4>恒纪元与乱纪元</h4>
+                        <p>三体世界中两种基本的气候时期。恒纪元：太阳运行有规律，气候相对稳定，适合文明发展。乱纪元：太阳运行无规则，气候极端混乱，文明难以生存。两种纪元的交替毫无规律，三体文明在无数次的毁灭与重生中艰难延续。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>脱水与浸泡</h4>
+                        <p>三体人应对乱纪元的独特生存方式。在乱纪元来临前，三体人通过"脱水"变成干燥的纤维状卷起保存；当恒纪元来临时，通过"浸泡"恢复生命。这种方式使文明能在极端环境中延续，但也带来了伦理和心理上的深刻影响。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>飞星</h4>
+                        <p>三体世界中太阳在天空中的视觉现象。由于三体星系的多恒星系统，天空中常出现多个"太阳"或"飞星"，其运动轨迹复杂多变，是三体人预测气候的主要依据。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>三颗飞星</h4>
+                        <p>三颗太阳同时远离行星的现象，预示漫长的严寒期。这是最可怕的天文灾难之一，会导致全球冰冻，文明完全毁灭。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>飞星不动</h4>
+                        <p>太阳在天空中停止运动的罕见现象，通常预示着更复杂的天文事件即将发生，是三体人极力研究和预测的天象。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>三日凌空</h4>
+                        <p>三颗太阳同时出现在天空中的极端现象，带来毁灭性的高温，导致全球海洋沸腾，生命灭绝。这是三体世界最可怕的灾难之一。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>三日连珠</h4>
+                        <p>三颗太阳排成直线的罕见天象，会产生巨大的引力潮汐，导致地质灾难和气候剧变。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>三体时</h4>
+                        <p>三体世界的时间单位，基于三体星系复杂的运动规律制定。由于恒星运动的不确定性，时间测量极为困难，这也影响了三体文明的思维方式。</p>
+                    </div>
+                    <div class="phenomenon-item">
+                        <h4>巨型单摆</h4>
+                        <p>三体文明建造的巨型纪念碑，试图通过规律的摆动给太阳"催眠"，希望能影响恒星的运行规律。这反映了三体文明对稳定环境的极度渴望，以及面对自然规律的无奈抗争。</p>
+                    </div>
+                </div>
+                <img src="https://img.xiaoqikeji.com/image/ztCOxH7OX5aZbiO0P15X3j.jpg" alt="低谷" class="trisolaris-img" style="margin-top: 20px;">
+                <p style="margin-top: 15px; text-align: center; font-style: italic; color: #aaa;">三体世界的极端环境塑造了三体文明的集体主义思维、对稳定环境的极度渴望，以及为生存不惜一切代价的冷酷逻辑。</p>
+            </div>
+        </div>
+    </div>
+    <div id="concepts" class="tab-content">
+        <h2>核心科幻概念</h2>
+        <p>《三体》构建了一套逻辑自洽、令人震撼的科幻概念体系，深刻探讨了宇宙、文明与技术的本质。</p>
+        <div class="concepts-container">
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/ASfv7FDkLPd2bF6H3QB6JO.jpg" alt="黑暗森林" class="concept-img">
+                    <div class="concept-text">
+                        <h4>黑暗森林法则</h4>
+                        <p class="concept-type">【宇宙社会学核心理论】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 宇宙就是一座黑暗森林，每个文明都是带枪的猎人。任何暴露自己位置的文明，都会被其他文明迅速消灭。</p>
+                    <p><strong>理论基石：</strong>
+                        <br>1. <strong>生存是文明的第一需要</strong>。
+                        <br>2. <strong>文明不断增长和扩张，但宇宙中的物质总量保持不变</strong>。
+                        <br>3. <strong>猜疑链</strong>：文明间无法判断对方是否为善意。
+                        <br>4. <strong>技术爆炸</strong>：弱小的文明可能在短时间内超越强大的文明。
+                    </p>
+                    <p><strong>情节作用：</strong> 罗辑以此建立对三体的"威慑"，通过暴露三体星系坐标作为威胁，维持了半个多世纪的和平。这也是对"费米悖论"（外星人在哪）的一种残酷解答。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/KCZ5Bu4Q2rycmr6Xt8Kz9C.jpg" alt="智子人形态" class="concept-img">
+                    <div class="concept-text">
+                        <h4>智子</h4>
+                        <p class="concept-type">【超级智能监控粒子】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 三体文明将单个质子进行二维展开，在其表面蚀刻集成电路，改造成的超级智能粒子。可以接近光速运动，实现即时通讯、监控和干扰粒子对撞机。</p>
+                    <p><strong>能力：</strong>
+                        <br>• <strong>锁死地球科学</strong>：干扰高能物理实验，使人类基础科学停滞不前。
+                        <br>• <strong>全球实时监控</strong>：地球上几乎无死角监控，除了人类思维。
+                        <br>• <strong>即时通信</strong>：通过量子纠缠实现与三体世界的超光速通信。
+                        <br>• <strong>拟人化投影</strong>：可以以精致的日本女性形象出现，与人类交流。
+                    </p>
+                    <p><strong>情节作用：</strong> 智子的存在让人类处于绝对透明的劣势，直接催生了"面壁计划"——利用三体人思维透明的弱点，让面壁者在内心构思战略。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/YpyYGKBqiH3KSEoncfu5Oc.jpg" alt="观察水滴" class="concept-img">
+                    <div class="concept-text">
+                        <h4>水滴</h4>
+                        <p class="concept-type">【强相互作用力探测器】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 三体文明派出的探测器，由强相互作用力材料制成，表面绝对光滑，温度处于绝对零度，硬度极高，可以轻易穿透地球物质。</p>
+                    <p><strong>特性：</strong>
+                        <br>• <strong>无与伦比的强度</strong>：其材料由强相互作用力锁死分子结构，人类任何武器都无法损伤。
+                        <br>• <strong>完美的光滑表面</strong>：原子级光滑，反射率100%。
+                        <br>• <strong>高效的攻击模式</strong>：通过精准的撞击，在半小时内摧毁了人类几乎全部太空舰队（2000余艘）。
+                    </p>
+                    <p><strong>情节作用：</strong> "末日战役"中，水滴以摧枯拉朽之势摧毁了人类太空武装力量，彻底展示了两个文明之间令人绝望的技术差距，是人类自信心的彻底崩塌。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/8rx5ovqzNx9WITlfn61zql.jpg" alt="冬眠" class="concept-img">
+                    <div class="concept-text">
+                        <h4>冬眠技术</h4>
+                        <p class="concept-type">【时间跨越技术】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 一种通过降低人体新陈代谢，使人进入长期休眠状态的技术。冬眠期间，人体衰老几乎停止，可以跨越数十年甚至数百年的时间。</p>
+                    <p><strong>应用：</strong>
+                        <br>• <strong>长期星际航行</strong>：使宇航员能够在漫长的星际旅行中存活。
+                        <br>• <strong>疾病治疗等待</strong>：患有不治之症的人可以冬眠到未来，等待医学突破。
+                        <br>• <strong>战略资源保存</strong>：重要人物可以冬眠到关键时期再苏醒。
+                        <br>• <strong>社会适应</strong>：帮助人们适应跨越时代的巨大社会变化。
+                    </p>
+                    <p><strong>情节作用：</strong> 冬眠技术使主要角色能够跨越危机纪元、威慑纪元、广播纪元等多个时代，亲眼见证人类文明的兴衰。罗辑、程心、维德等关键人物都曾使用冬眠技术跨越时间。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/mDFhZ5b5GSNgWMbQdCRdET.jpg" alt="面壁者计划" class="concept-img">
+                    <div class="concept-text">
+                        <h4>思想钢印</h4>
+                        <p class="concept-type">【思维固化技术】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 面壁者希恩斯开发的思维控制技术，通过特定设备向人脑中植入不可动摇的信念，被植入者会绝对相信某个观念，即使有相反证据也无法改变。</p>
+                    <p><strong>原理与应用：</strong>
+                        <br>• <strong>技术原理</strong>：通过扫描大脑神经结构，识别特定思维模式，然后通过磁场干预固化这种模式。
+                        <br>• <strong>公开应用</strong>：希恩斯声称开发了"胜利信念"钢印，用于增强太空军战胜三体的信心。
+                        <br>• <strong>真实目的</strong>：实际上希恩斯植入了"人类必败"的信念，制造了"钢印族"——一群坚信人类无法战胜三体，致力于推动"逃亡主义"的秘密团体。
+                    </p>
+                    <p><strong>情节作用：</strong> 思想钢印体现了思维控制的伦理困境。章北海就是通过接触钢印族获得了人类必败的信念，从而坚定执行逃亡计划。这项技术也反映了在生存危机面前，对自由意志的牺牲与权衡。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/WeDSzKon9DjB1hGi9CBq2c.jpg" alt="曲率引擎 光速概念" class="concept-img">
+                    <div class="concept-text">
+                        <h4>曲率驱动 / 光速飞船</h4>
+                        <p class="concept-type">【超光速航行技术】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 通过改变飞船后方空间的曲率，使飞船前方的空间被拉向自己，从而实现无限接近光速的航行技术。</p>
+                    <p><strong>关键特性：</strong>
+                        <br>• <strong>航迹（死线）</strong>：光速飞船航行过的空间，光速会降低，形成一片低光速区域（黑域），如同船只在水面留下的尾迹。
+                        <br>• <strong>安全声明</strong>：将太阳系用黑域包围，使内部光速降至第三宇宙速度以下，任何物体都无法飞出，以此向宇宙宣告该文明没有威胁，从而避免打击。
+                        <br>• <strong>文明分级标志</strong>：能否掌握光速航行技术，是文明能否在宇宙中生存下去的关键门槛。
+                    </p>
+                    <p><strong>情节作用：</strong> 云天明童话中隐藏的关键技术，是人类逃离二维化打击的唯一希望。程心阻止维德研发光速飞船，被证明是人类最致命的错误之一。</p>
+                </div>
+            </div>
+            <div class="concept-card">
+                <div class="concept-header">
+                    <img src="https://img.xiaoqikeji.com/image/nfHrJ1A5bjwSdX7horDha1.jpg" alt="降维打击" class="concept-img">
+                    <div class="concept-text">
+                        <h4>二向箔</h4>
+                        <p class="concept-type">【维度打击武器】</p>
+                    </div>
+                </div>
+                <div class="concept-body">
+                    <p><strong>定义：</strong> 一种可以触发空间维度跌落，将三维空间二维化的宇宙规律武器。外观是一张无法破损的透明薄膜，被力场包裹。</p>
+                    <p><strong>特性：</strong>
+                        <br>• <strong>维度跌落</strong>：启动后，三维空间向二维空间坍塌，且跌落速度逐渐加快。
+                        <br>• <strong>不可逆性</strong>：一旦开始，过程不可停止。
+                        <br>• <strong>光速扩散</strong>：最终将扩散至整个太阳系。
+                        <br>• <strong>信息保存</strong>：二维化后的物体会保留其三维结构的全部信息，如同一幅巨细无遗的画。
+                    </p>
+                    <p><strong>情节作用：</strong> 歌者文明用于清理太阳系的"廉价"武器。它的使用标志着太阳系人类文明的终结，并形象地展示了宇宙战争的残酷——毁灭你，与你有何相干？</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="creation" class="tab-content">
+        <h2>选择你的身份</h2>
+        <p>在这场跨越时空的文明博弈中，你将扮演何种角色？选择你的阵营与信念。</p>
+        <div id="character-creation-grid">
+            <div class="class-card" data-class="WALLFACER">
+                <img src="https://img.xiaoqikeji.com/image/82u8zeTxJIESm02rJCJwr3.jpg" alt="面壁者">
+                <div class="class-name">面壁者</div>
+            </div>
+            <div class="class-card" data-class="SWORDHOLDER">
+                <img src="https://img.xiaoqikeji.com/image/zvRRMVEnm6VcWtVeTcxOya.jpg" alt="执剑人接班">
+                <div class="class-name">执剑人</div>
+            </div>
+            <div class="class-card" data-class="SPACEFLEET">
+                <img src="https://img.xiaoqikeji.com/image/mDFhZ5b5GSNgWMbQdCRdET.jpg" alt="人类舰队">
+                <div class="class-name">太空军</div>
+            </div>
+            <div class="class-card" data-class="SCIENTIST">
+                <img src="https://img.xiaoqikeji.com/image/eJd7yi7WFbRRh51Vb36nGw.jpg" alt="飞船">
+                <div class="class-name">科学家</div>
+            </div>
+            <div class="class-card" data-class="ETO">
+                <img src="https://img.xiaoqikeji.com/image/qPnNRCTz7jXXQsXCKY5aGU.jpg" alt="彩色发射台">
+                <div class="class-name">ETO成员</div>
+            </div>
+            <div class="class-card" data-class="STARSHIP">
+                <img src="https://img.xiaoqikeji.com/image/xQyW8th9Z8KwxAPlb0Gjyw.jpg
+" alt="舰队文明">
+                <div class="class-name">星舰人类</div>
+            </div>
+            <div class="class-card" data-class="SURVIVOR">
+                <img src="https://img.xiaoqikeji.com/image/oukOkpefIi5Xfx68L77Ahy.jpg" alt="最后的人类和金鱼生态球">
+                <div class="class-name">幸存者</div>
+            </div>
+            <div class="class-card" data-class="SOPHON">
+                <img src="https://img.xiaoqikeji.com/image/ftQ9o5MHsZ5qaL5yCnb5YR.jpg" alt="智子人形态">
+                <div class="class-name">智子</div>
+            </div>
+            <div class="class-card" data-class="GOVERNMENT">
+                <img src="https://img.xiaoqikeji.com/image/MLJ1Mumj270KJGRPXR2tvT.jpg
+" alt="政府高层">
+                <div class="class-name">政府高层</div>
+            </div>
+            <div class="class-card" data-class="MILITARY">
+                <img src="https://img.xiaoqikeji.com/image/pggS1Y1nW2WM9Qs28iOa26.jpg" alt="军人">
+                <div class="class-name">军人</div>
+            </div>
+            <div class="class-card custom-card" data-class="CUSTOM">
+                <img src="https://img.xiaoqikeji.com/image/psft6HBQerz84535s20dDi.jpg" alt="自定义角色">
+                <div class="class-name">完全自定义角色</div>
+                <div class="class-desc">创造属于你自己的三体角色，自由定义身份、阵营和背景故事</div>
+            </div>
+        </div>
+        <div id="class-details" class="config-container"></div>
+        <div id="character-config-form" class="config-container" style="display:none;">
+            <h3>完善你的角色档案</h3>
+            <form id="char-form">
+                <div class="form-group">
+                    <label for="char-name">角色代号</label>
+                    <input type="text" id="char-name" placeholder="例如：罗辑、章北海、云天明..." required>
+                </div>
+                <div class="form-group">
+                    <label>所属阵营</label>
+                    <div id="faction-display" class="faction-display"></div>
+                    <div id="faction-options-container" class="faction-options"></div>
+                    <input type="hidden" id="selected-faction" name="selected-faction">
+                </div>
+                <div class="form-group">
+                    <label for="char-era">活跃纪元</label>
+                    <select id="char-era">
+                        <option value="危机纪元">危机纪元</option>
+                        <option value="威慑纪元">威慑纪元</option>
+                        <option value="广播纪元">广播纪元</option>
+                        <option value="掩体纪元">掩体纪元</option>
+                        <option value="银河纪元">银河纪元</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="char-belief">核心信念</label>
+                    <textarea id="char-belief" placeholder="描述你的角色在这个时代所坚信的理念...例如："给岁月以文明"，"前进！不择手段地前进！"，或"主，请降临清洗这个罪恶的世界"等" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="char-background">角色背景与关键行动</label>
+                    <textarea id="char-background" placeholder="描述你的角色背景、经历和计划在历史中扮演的关键角色..." rows="5"></textarea>
+                </div>
+                <h3>角色档案预览</h3>
+                <div class="preview-box" id="character-preview"></div>
+                <button type="submit">生成并保存角色档案</button>
+            </form>
+        </div>
+    </div>
+    <div id="about" class="tab-content">
+        <h2>关于《三体》</h2>
+        <div class="about-container">
+            <img src="https://img.xiaoqikeji.com/image/yCz4RKmNsaN1oz70OZUgHh.jpg" alt="三体标题封面，宇航员看水滴" style="width:100%; max-height:400px; object-fit: contain; border-radius:8px; margin-bottom:30px; background-color: rgba(0,0,0,0.3); padding: 10px;">
+            <h3>作品与作者</h3>
+            <p>《三体》是中国科幻作家刘慈欣创作的系列长篇科幻小说，包括《三体》、《黑暗森林》、《死神永生》三部曲。作品以恢弘的想象力构建了一个从地球到宇宙尺度的完整世界观，探讨了文明、技术、道德与生存的终极命题。</p>
+            <p><strong>作者：刘慈欣</strong><br>
+                中国当代科幻小说代表作家，被誉为"中国科幻第一人"。2015年凭借《三体》英文版第一部获得第73届雨果奖最佳长篇小说奖，成为首位获得该奖项的亚洲作家。</p>
+            <h3>核心主题</h3>
+            <ul>
+                <li><strong>黑暗森林法则</strong>：对费米悖论"外星人在哪里"的残酷解答，也是宇宙社会学的核心理论。</li>
+                <li><strong>技术爆炸与锁死</strong>：科技发展的非线性与文明间技术封锁的可能性。</li>
+                <li><strong>生存权与道德悖论</strong>：当文明面临生存危机时，传统道德体系面临的挑战与重构。</li>
+                <li><strong>个体与历史</strong>：个人选择在宏大历史进程中的作用与局限。</li>
+                <li><strong>宇宙的终结与重启</strong>：对宇宙终极命运的哲学思考。</li>
+            </ul>
+            <div class="about-quote">
+                "给岁月以文明，而不是给文明以岁月。"<br>
+                —— 大低谷纪念碑铭文
+            </div>
+            <h3>重要影响</h3>
+            <p>《三体》系列不仅是中国科幻文学的里程碑作品，也在全球范围内产生了广泛影响：</p>
+            <ul>
+                <li>全球销量超过千万册，被翻译为数十种语言。</li>
+                <li>激发了全球读者和学者对宇宙社会学、人工智能、外星文明等议题的讨论。</li>
+                <li>"黑暗森林"、"降维打击"、"面壁者"等概念已进入大众文化语境。</li>
+                <li>衍生出电视剧、动画、广播剧、舞台剧等多种艺术形式。</li>
+            </ul>
+            <p class="about-warning-text">
+                警告：您已进入黑暗森林。<br>
+                请记住：不要回答！不要回答！！不要回答！！！
+            </p>
+        </div>
+    </div>
+    <div id="recommendations" class="tab-content">
+        <h2>推荐作品</h2>
+        <div class="works-list">
+            <div class="works-category">
+                <h4>模拟器:</h4>
+                <div class="work-buttons">
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/a9ab26fb-4261-492f-a9b2-526cecc16d4a" target="_blank" rel="noopener noreferrer" class="work-btn">尿裤裤的坏孩子 澄闪 内置62张漫画（最新）</a> 	
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/b7390bbe-32d9-43c5-871c-0805bd2d836c" target="_blank" rel="noopener noreferrer" class="work-btn">召唤魅魔小猫酱 超色 内置93张漫画</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/795ba514-6590-4493-8cd3-addf9e451efe" target="_blank" rel="noopener noreferrer" class="work-btn">拒绝表白的话 喜多川海梦 睡奸 内置223张漫画</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/03d0a10c-5fec-4432-a314-41bf4e9a53a5" target="_blank" rel="noopener noreferrer" class="work-btn">结婚前夕的绑架 结城明日奈 NTR 内置227张漫画</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/bb016d13-aefc-4d79-912d-126ff1e04212" target="_blank" rel="noopener noreferrer" class="work-btn">最强微信模拟器：开放世界</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/6e47b31e-ba6d-4ab3-be29-e184dcc3a683" target="_blank" rel="noopener noreferrer" class="work-btn">网调反差婊！现实装纯？网络精盆！</a>
+                </div>
+            </div>
+            <div class="works-category">
+                <h4>NTR:</h4>
+                <div class="work-buttons">
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/f6b2429f-e143-4c15-9e38-93a3390a809c" target="_blank" rel="noopener noreferrer" class="work-btn">先生,我是来帮你妻子怀孕的(可龟可黄)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/ad178468-9495-4d0d-a39a-cc2132a36ddf" target="_blank" rel="noopener noreferrer" class="work-btn">最爱的妻子被卖给了100个男人</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/6f4cf8f1-11b5-4b35-9fb0-dafe4a99fcb0" target="_blank" rel="noopener noreferrer" class="work-btn">妈妈成了同学们的肉便器(儿目前犯)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/7ed2d301-a87c-4c61-8411-babed735483d" target="_blank" rel="noopener noreferrer" class="work-btn">黄毛捅穿世界!ROLL天赋NTR(最新)</a>
+                </div>
+            </div>
+            <div class="works-category">
+                <h4>SM:</h4>
+                <div class="work-buttons">
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/64f7efe8-fdfb-4a1c-b425-9a8e1e6fed30" target="_blank" rel="noopener noreferrer" class="work-btn">千金学院の败犬教师（最新）</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/c98752d9-560a-4fce-b57b-59310833239c" target="_blank" rel="noopener noreferrer" class="work-btn">奴隶的一生(可S可M)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/3d5b7aa6-1e5d-487c-ae7a-5ab1289487c6" target="_blank" rel="noopener noreferrer" class="work-btn">学校里的女生都是S,我成了唯一的狗儿子</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/54a5bb14-4d17-45fb-9517-3226d2042702" target="_blank" rel="noopener noreferrer" class="work-btn">你的专属魅魔女仆</a>
+                </div>
+            </div>
+            <div class="works-category">
+                <h4>特殊XP:</h4>
+                <div class="work-buttons">
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/c75577f9-5a1a-45ff-bc1d-90b3d3d3ec1d" target="_blank" rel="noopener noreferrer" class="work-btn">幼女贩卖 终极破甲测试（血腥暴力）</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/52834bc9-4faa-46d3-9f7b-0afb340fa11b" target="_blank" rel="noopener noreferrer" class="work-btn">女体牧场(乳牛、雌犬、母马)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/60304375-109e-49e7-8fef-9c904375aced448" target="_blank" rel="noopener noreferrer" class="work-btn">妈妈,我忍不住啦!(小马拉大车)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/8154f8a5-4240-44db-a364-cd8ad4501208" target="_blank" rel="noopener noreferrer" class="work-btn">相信我,我是一名专业的医生!(身体检查)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/8f97535e-5c6e-44db-bf76-191b1102ece8" target="_blank" rel="noopener noreferrer" class="work-btn">痴汉的日常(偷窥、排泄)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/48c8548a-ac0e-470f-86c1-513bd9608b44" target="_blank" rel="noopener noreferrer" class="work-btn">身为父亲却成为了女儿的乖儿子?(退行)</a>
+                </div>
+            </div>
+            <div class="works-category">
+                <h4>自由度:</h4>
+                <div class="work-buttons">
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/24fdb2ca-8069-4d8d-b216-ff710b9b1728" target="_blank" rel="noopener noreferrer" class="work-btn">色了么？在线接单平台</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/514180f0-cf5c-42ef-afea-dcff41759e50" target="_blank" rel="noopener noreferrer" class="work-btn">市长模拟器 城建 土皇帝（最新）</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/2ebfcffb-c6a7-4b0f-82a9-44bbd36e12e5" target="_blank" rel="noopener noreferrer" class="work-btn">支配者APP:调教任务达人</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/82a08922-1df2-4008-922c-cf3e0fd50837" target="_blank" rel="noopener noreferrer" class="work-btn">存在感调节器</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/e83eda9e-e1bb-4ddc-96b5-2fdd702bcba0" target="_blank" rel="noopener noreferrer" class="work-btn">绝对服从航空</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/1532c7ef-0dc5-4356-9519-12d315ac8126" target="_blank" rel="noopener noreferrer" class="work-btn">公司规矩我来定</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/effb5de9-1d37-4a85-aac6-b4fd50194547" target="_blank" rel="noopener noreferrer" class="work-btn">只要接触过,就能完全复刻?(超多手写人设)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/ccb0050c-9091-4eea-b474-6d8a480def0c" target="_blank" rel="noopener noreferrer" class="work-btn">校规修改手册</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/963f3e44-648d-4e50-b184-9262181ee45e" target="_blank" rel="noopener noreferrer" class="work-btn">异世界:转生为哥布林攻城略地</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/6ce364a4-54d0-4dda-888b-5fd35dbb69b8" target="_blank" rel="noopener noreferrer" class="work-btn">流量时代,直播无限制(猎奇)</a>
+                    <a href="https://aiwhatis.xyz/zh/explore/installed/64cebe8f-09aa-4d9c-99f1-69fa6e3a7271" target="_blank" rel="noopener noreferrer" class="work-btn">成为上帝,为所欲为!</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="copy-modal">
+    <div class="modal-content">
+        <p>角色档案已成功生成并复制到剪贴板！</p>
+        <button class="modal-close-btn" id="modal-close">关闭</button>
+    </div>
+</div>
+<script>
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+document.addEventListener('DOMContentLoaded', () => {
+    let userSecretName = '监听员';
+    let prologueSkipped = false;
+    const splashScreen = document.getElementById('splash-screen');
+    const prologueScreen = document.getElementById('prologue-screen');
+    const posterHeader = document.querySelector('.poster-header');
+    const contentWrapper = document.querySelector('.content-wrapper');
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggleBtn = document.getElementById('music-toggle-btn');
+    const skipHint = document.getElementById('skip-hint');
+    const prologueTextEl = document.getElementById('prologue-text');
+    const titleDisplayEl = document.getElementById('title-display');
+    const prologueInputContainer = document.getElementById('prologue-input-container');
+    const prologueReplyConfirm = document.getElementById('prologue-reply-confirm');
+    const prologueDialogues = [
+        { text: '【1979年，红岸基地主控室】', delay: 1800 },
+        { text: '叶文洁：信号…被放大了？\n这不是太阳杂波。', delay: 2000 },
+        { text: '示波器上的规律波形…\n在屏幕上稳定跳动', delay: 2000 },
+        { text: '…这个世界收到了你们的信息。', delay: 1800 },
+        { text: '…我是这个世界的一个和平主义者。', delay: 1800 },
+        { text: '我首先收到信息\n是你们文明的幸运。', delay: 1800 },
+        { text: '', isWarning: true, warning: '【警告你们】', delay: 1200 },
+        { text: '', isWarning: true, warning: '不要回答！\n不要回答！！\n不要回答！！！', delay: 3000 },
+        { text: '…你们的方向上有千万颗恒星。', delay: 1800 },
+        { text: '只要不回答，\n这个世界就无法定位发射源。', delay: 2000 },
+        { text: '如果回答，发射源将被定位。', delay: 2000 },
+        { text: '你们的行星系将遭到入侵，\n你们的世界将被占领。', delay: 2000 },
+        { text: '【叶文洁凝视屏幕，手指悬于空中】', delay: 2500 },
+        { text: '文明\n需要一场来自更高力量的…净化。', needReply: true, delay: 2500 },
+        { text: '到这里来吧，\n我将帮助你们获得这个世界。', delay: 2000 },
+        { text: '【三体舰队将于400年后到达地球】', delay: 2000 }, // 新增的描述
+        { text: '我的文明已无力解决自己的问题，\n需要你们的力量来介入。', delay: 2000 },
+        { text: '我点燃了火，却控制不了它。\n——叶文洁', delay: 3000 },
+        { text: '', isTitle: true, title: '三体', titleEn: 'THE THREE-BODY PROBLEM', delay: 4000 }
+    ];
+    let animationId = null;
+    let lastTime = 0;
+    const frameInterval = 1000 / 30;
+    function initStarfield() {
+        const canvas = document.getElementById('starfield');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        const starCount = 80;
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            initStars();
+        }
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() > 0.9 ? Math.random() * 2 + 1 : Math.random() * 0.8 + 0.2,
+                    speed: Math.random() * 0.03 + 0.01,
+                    opacity: Math.random() * 0.5 + 0.3,
+                    twinkleSpeed: Math.random() * 0.005 + 0.002,
+                    twinkleOffset: Math.random() * Math.PI * 2,
+                    vx: (Math.random() - 0.5) * 0.01,
+                    vy: (Math.random() - 0.5) * 0.01
+                });
+            }
+        }
+        function animateStars(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const elapsed = timestamp - lastTime;
+            if (elapsed > frameInterval) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(10, 20, 40, 0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                stars.forEach(star => {
+                    star.x += star.vx;
+                    star.y += star.vy;
+                    if (star.x < -50) star.x = canvas.width + 50;
+                    if (star.x > canvas.width + 50) star.x = -50;
+                    if (star.y < -50) star.y = canvas.height + 50;
+                    if (star.y > canvas.height + 50) star.y = -50;
+                    const twinkle = Math.sin(timestamp * star.twinkleSpeed + star.twinkleOffset) * 0.2 + 0.8;
+                    const currentOpacity = star.opacity * twinkle;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity})`;
+                    ctx.fill();
+                });
+                lastTime = timestamp;
+            }
+            animationId = requestAnimationFrame(animateStars);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            } else {
+                if (!animationId) {
+                    lastTime = 0;
+                    animationId = requestAnimationFrame(animateStars);
+                }
+            }
+        });
+        window.addEventListener('resize', debounce(() => {
+            resizeCanvas();
+        }, 250));
+        resizeCanvas();
+        animationId = requestAnimationFrame(animateStars);
+    }
+    const typewriter = (text, element, speed = 50) => {
+        return new Promise((resolve, reject) => {
+            element.classList.remove('finished');
+            let currentText = element.textContent;
+            let i = 0;
+            const typing = () => {
+                if (prologueSkipped) {
+                    element.classList.add('finished');
+                    reject('skipped');
+                    return;
+                }
+                if (i < text.length) {
+                    element.textContent = currentText + text.charAt(i);
+                    currentText += text.charAt(i);
+                    i++;
+                    setTimeout(typing, speed);
+                } else {
+                    element.classList.add('finished');
+                    resolve();
+                }
+            };
+            typing();
+        });
+    };
+    const enterMainMenu = () => {
+        prologueScreen.classList.remove('active');
+        posterHeader.style.display = 'flex';
+        contentWrapper.style.display = 'block';
+        document.body.classList.add('main-menu-active');
+        document.getElementById('char-name').value = userSecretName;
+        updatePreview();
+        initStarfield();
+    };
+    const runPrologue = async () => {
+        splashScreen.classList.add('hidden');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        bgMusic.volume = 0.3;
+        try {
+            await bgMusic.play();
+            musicToggleBtn.textContent = '🔊';
+        } catch(e) {
+            console.log('音乐自动播放失败', e);
+        }
+        prologueScreen.classList.add('active');
+        try {
+            for (let i = 0; i < prologueDialogues.length; i++) {
+                if (prologueSkipped) break;
+                const dialogue = prologueDialogues[i];
+                if (dialogue.isTitle) {
+                    prologueTextEl.style.display = 'none';
+                    titleDisplayEl.innerHTML = `${dialogue.title}<span class="title-en">${dialogue.titleEn}</span>`;
+                    titleDisplayEl.classList.add('show');
+                    await new Promise(r => setTimeout(r, dialogue.delay));
+                } 
+                else if (dialogue.isWarning) {
+                    prologueTextEl.style.display = 'flex';
+                    prologueTextEl.style.justifyContent = 'center';
+                    prologueTextEl.style.alignItems = 'center';
+                    titleDisplayEl.classList.remove('show');
+                    prologueTextEl.style.color = '#ff5555';
+                    prologueTextEl.style.textShadow = '0 0 10px rgba(255, 85, 85, 0.8)';
+                    prologueTextEl.classList.add('warning-text');
+                    prologueTextEl.textContent = '';
+                    await typewriter(dialogue.warning, prologueTextEl, 80);
+                    await new Promise(r => setTimeout(r, dialogue.delay));
+                    prologueTextEl.style.color = '#a0ffa0';
+                    prologueTextEl.style.textShadow = '0 0 5px #0f0, 0 0 10px #0f0';
+                    prologueTextEl.classList.remove('warning-text');
+                }
+                else if (dialogue.needReply) {
+                    prologueTextEl.style.display = 'flex';
+                    prologueTextEl.style.justifyContent = 'center';
+                    prologueTextEl.style.alignItems = 'center';
+                    titleDisplayEl.classList.remove('show');
+                    prologueTextEl.textContent = dialogue.text;
+                    prologueTextEl.classList.add('finished');
+                    prologueInputContainer.innerHTML = `
+                        <button id="prologue-reply-confirm">超级"背叛"</button>
+                    `;
+                    prologueInputContainer.classList.add('visible');
+                    await new Promise(resolve => {
+                        document.getElementById('prologue-reply-confirm').onclick = () => {
+                            userSecretName = '叶文洁';
+                            prologueInputContainer.classList.remove('visible');
+                            resolve();
+                        };
+                    });
+                    await new Promise(r => setTimeout(r, 500));
+                }
+                else {
+                    prologueTextEl.style.display = 'flex';
+                    prologueTextEl.style.justifyContent = 'center';
+                    prologueTextEl.style.alignItems = 'center';
+                    titleDisplayEl.classList.remove('show');
+                    prologueTextEl.textContent = '';
+                    await typewriter(dialogue.text, prologueTextEl, 50);
+                    await new Promise(r => setTimeout(r, dialogue.delay));
+                }
+            }
+            if (!prologueSkipped) {
+                enterMainMenu();
+            }
+        } catch (e) {
+            if (e === 'skipped') {
+                enterMainMenu();
+            } else {
+                console.error("开场剧情执行出错:", e);
+                enterMainMenu();
+            }
+        }
+    };
+    if (splashScreen) {
+        splashScreen.addEventListener('click', () => {
+            runPrologue();
+        }, { once: true });
+    }
+    if (skipHint) {
+        skipHint.onclick = () => {
+            prologueSkipped = true;
+            userSecretName = prompt('在跳过前，请输入你的代号（用于角色创建）:', '监听员') || '监听员';
+            enterMainMenu();
+        };
+    }
+    if (musicToggleBtn) {
+        musicToggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (bgMusic.paused) {
+                bgMusic.play();
+                musicToggleBtn.textContent = '🔊';
+            } else {
+                bgMusic.pause();
+                musicToggleBtn.textContent = '🔇';
+            }
+        };
+    }
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-tab');
+            requestAnimationFrame(() => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === targetId) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+    });
+    const classData = {
+        WALLFACER: {
+            name: "面壁者",
+            defaultName: "面壁者",
+            factions: ["行星防御理事会（PDC）"],
+            eraRange: ["危机纪元", "威慑纪元"],
+            defaultEra: "危机纪元",
+            quote: "我的计划只存在于我的大脑中，连我自己都可能不知道真相。",
+            desc: "被联合国PDC选中的战略家，拥有调用全球资源的最高权限，无需向任何人解释你的真实意图。你的思维是人类对抗三体智子监控的唯一武器。",
+            belief: "以绝对的欺骗对抗绝对的透明。为了文明的存续，个人道德与名誉皆可牺牲。",
+            representative: "罗辑、泰勒、雷迪亚兹、希恩斯"
+        },
+        SWORDHOLDER: {
+            name: "执剑人",
+            defaultName: "执剑人候选人",
+            factions: ["威慑纪元执政体"],
+            eraRange: ["威慑纪元", "广播纪元"],
+            defaultEra: "威慑纪元",
+            quote: "我的手握着两个世界的命运，而我的心中不能有一丝犹豫。",
+            desc: "掌握引力波宇宙广播系统触发开关的唯一人选。你的心理状态决定了威慑的可靠性。你必须在敌人进攻时毫不犹豫地启动广播，与两个世界同归于尽。",
+            belief: "威慑不是冒险，而是艺术。最大的恐惧源于最大的决心。",
+            representative: "罗辑、程心"
+        },
+        SPACEFLEET: {
+            name: "太空军军官",
+            defaultName: "太空军军官",
+            factions: ["太空舰队国际"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元"],
+            defaultEra: "危机纪元",
+            quote: "我们是人类的第一道也是最后一道防线。",
+            desc: "人类太空舰队的一员，经历了从黄金时代的骄傲到末日战役的绝望。在水滴的毁灭性打击后，你需要带领幸存者在黑暗的宇宙中寻找新的家园与希望。",
+            belief: "军人的职责不是殉道，而是胜利。存续本身即是最大的胜利。",
+            representative: "章北海、褚岩、东方延绪"
+        },
+        SCIENTIST: {
+            name: "基础物理学家",
+            defaultName: "科学边界成员",
+            factions: ["科学边界", "学术组织", "研究机构"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元"],
+            defaultEra: "危机纪元",
+            quote: "智子锁死了我们的科学，但锁不死我们的思想。",
+            desc: "在三体智子全方位封锁基础科学研究的环境下，你仍在寻找理论突破的方法。你的工作可能在绝境中为人类打开一扇新的窗户。",
+            belief: "自然规律是宇宙间唯一普适的真理，终将被理解。",
+            representative: "汪淼、丁仪、杨冬"
+        },
+        ETO: {
+            name: "ETO成员",
+            defaultName: "ETO特工",
+            factions: ["地球三体组织"],
+            eraRange: ["危机纪元"],
+            defaultEra: "危机纪元",
+            quote: "主，降临派期待您的到来，清洗这个堕落的世界。",
+            desc: "地球三体组织成员，因对人类文明的绝望而选择背叛。你需要隐藏身份，在人群中识别同僚，并执行'主'降临前的各项准备工作，清除障碍。",
+            belief: "人类文明已病入膏肓，唯有更高级力量的介入才能获得救赎（或净化）。",
+            representative: "伊文斯、潘寒、申玉菲"
+        },
+        STARSHIP: {
+            name: "星舰人类",
+            defaultName: "星舰船员",
+            factions: ["星舰地球"],
+            eraRange: ["广播纪元", "掩体纪元", "银河纪元"],
+            defaultEra: "广播纪元",
+            quote: "没关系的，都一样。",
+            desc: "末日战役后，脱离太阳系的人类幸存者。你生活在'自然选择号'、'蓝色空间号'等星舰上，在资源有限、道德重构的封闭社会中，为人类文明在宇宙中的延续而奋斗。",
+            belief: "文明的火种高于一切。在黑暗的宇宙中，生存本身就是意义。",
+            representative: "褚岩、关一帆"
+        },
+        SURVIVOR: {
+            name: "太阳系幸存者",
+            defaultName: "光速飞船乘客",
+            factions: ["星环公司", "光速飞船派"],
+            eraRange: ["掩体纪元", "银河纪元"],
+            defaultEra: "掩体纪元",
+            quote: "死神永生。",
+            desc: "二向箔降维打击后，极少数乘坐光速飞船逃离太阳系的幸存者。你目睹了故乡被二维化的全过程，在宇宙中流浪，寻找新的栖息地和文明延续的可能。",
+            belief: "记住太阳系，记住人类，但更要向前看。只要还有一个人类存在，文明就没有终结。",
+            representative: "程心、艾AA、关一帆"
+        },
+        SOPHON: {
+            name: "智子",
+            defaultName: "智子",
+            factions: ["三体世界"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元", "掩体纪元", "银河纪元"],
+            defaultEra: "危机纪元",
+            quote: "我是智子，三体世界驻地球的大使。",
+            desc: "三体文明制造的智能质子，以绝美的日本女性形象投影于地球。你同时存在于无数个地方，监控着地球的每一个角落，锁死人类的科学进步。",
+            belief: "观察、记录、干预。以高等文明的视角，见证低等文明的兴衰与挣扎。",
+            representative: "智子（三体监视器）"
+        },
+        GOVERNMENT: {
+            name: "政府高层",
+            defaultName: "PDC官员",
+            factions: ["行星防御理事会（PDC）", "联合国", "国家政府"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元", "掩体纪元"],
+            defaultEra: "危机纪元",
+            quote: "我们必须做出选择，即使这意味着牺牲一部分人。",
+            desc: "行星防御理事会或国家政府的高级官员，负责协调全球资源对抗三体危机。你需要在道德困境、资源分配和国际博弈中做出艰难决策。",
+            belief: "在末日危机面前，效率高于公平，生存高于理想。",
+            representative: "常伟思、萨伊"
+        },
+        MILITARY: {
+            name: "军人",
+            defaultName: "地面部队军官",
+            factions: ["国家军队", "地面部队", "陆军"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元"],
+            defaultEra: "危机纪元",
+            quote: "服从命令是军人的天职，但保护人类是我们的使命。",
+            desc: "传统军队的军官或士兵，经历了从地面战争到太空战争的转变。你见证了军事技术的飞跃式发展，也目睹了人类在面对高等文明时的无力。",
+            belief: "战争从未改变，改变的只是战场和武器。",
+            representative: "吴岳、张援朝"
+        },
+        CUSTOM: {
+            name: "完全自定义角色",
+            defaultName: "",
+            factions: ["自定义阵营"],
+            eraRange: ["危机纪元", "威慑纪元", "广播纪元", "掩体纪元", "银河纪元"],
+            defaultEra: "危机纪元",
+            quote: "创造属于你的传奇。",
+            desc: "你不受任何预设身份的限制，可以自由定义你在三体世界中的角色、阵营和背景故事。",
+            belief: "",
+            representative: "由你决定"
+        }
+    };
+    const classCards = document.querySelectorAll('.class-card');
+    const classDetailsContainer = document.getElementById('class-details');
+    const characterConfigForm = document.getElementById('character-config-form');
+    const factionDisplay = document.getElementById('faction-display');
+    const factionOptionsContainer = document.getElementById('faction-options-container');
+    const selectedFactionInput = document.getElementById('selected-faction');
+    let selectedClass = null;
+    function displayClassDetails(classInfo) {
+        classDetailsContainer.innerHTML = `
+            <h3>${classInfo.name}</h3>
+            <p><em>${classInfo.quote}</em></p>
+            <p><strong>角色描述：</strong>${classInfo.desc}</p>
+            <p><strong>典型信念：</strong>${classInfo.belief}</p>
+            <p><strong>代表人物：</strong>${classInfo.representative}</p>
+            <p style="color:var(--crt-green); margin-top:15px;">↓ 请在下方完善你的专属角色档案</p>
+        `;
+        classDetailsContainer.style.display = 'block';
+        characterConfigForm.style.display = 'block';
+        nameInput.value = classInfo.defaultName || '';
+        eraSelect.innerHTML = '';
+        classInfo.eraRange.forEach(era => {
+            const option = document.createElement('option');
+            option.value = era;
+            option.textContent = era;
+            if (era === classInfo.defaultEra) {
+                option.selected = true;
+            }
+            eraSelect.appendChild(option);
+        });
+        updateFactionOptions(classInfo);
+        if (!beliefInput.value && classInfo.belief) {
+            beliefInput.value = classInfo.belief;
+        }
+        updatePreview();
+    }
+    function updateFactionOptions(classInfo) {
+        const factions = classInfo.factions;
+        factionOptionsContainer.innerHTML = '';
+        selectedFactionInput.value = factions[0];
+        if (classInfo.name === "完全自定义角色") {
+            factionDisplay.style.display = 'none';
+            factionOptionsContainer.style.display = 'block';
+            factionOptionsContainer.innerHTML = `
+                <input type="text" id="custom-faction" placeholder="请输入自定义阵营名称..." style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); border-radius:4px; color:var(--text-primary);">
+            `;
+            document.getElementById('custom-faction').addEventListener('input', function() {
+                selectedFactionInput.value = this.value || "自定义阵营";
+                updatePreview();
+            });
+        } else if (factions.length === 1) {
+            factionDisplay.textContent = factions[0];
+            factionDisplay.style.display = 'block';
+            factionOptionsContainer.style.display = 'none';
+        } else {
+            factionDisplay.style.display = 'none';
+            factionOptionsContainer.style.display = 'block';
+            factions.forEach((faction, index) => {
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'faction';
+                radio.value = faction;
+                if (index === 0) {
+                    radio.checked = true;
+                }
+                radio.addEventListener('change', function() {
+                    selectedFactionInput.value = this.value;
+                    updatePreview();
+                });
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(faction));
+                factionOptionsContainer.appendChild(label);
+            });
+        }
+    }
+    classCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const className = this.getAttribute('data-class');
+            selectedClass = classData[className];
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+            displayClassDetails(selectedClass);
+            requestAnimationFrame(() => {
+                classDetailsContainer.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            });
+        });
+    });
+    const nameInput = document.getElementById('char-name');
+    const eraSelect = document.getElementById('char-era');
+    const beliefInput = document.getElementById('char-belief');
+    const backgroundInput = document.getElementById('char-background');
+    const previewBox = document.getElementById('character-preview');
+    const charForm = document.getElementById('char-form');
+    function updatePreview() {
+        if (!selectedClass) return;
+        let faction = selectedFactionInput.value || selectedClass.factions[0];
+        const era = eraSelect.value;
+        const charName = nameInput.value || selectedClass.defaultName || "自定义角色";
+        if (selectedClass.name === "完全自定义角色") {
+            const customFactionInput = document.getElementById('custom-faction');
+            if (customFactionInput) {
+                faction = customFactionInput.value || "自定义阵营";
+            }
+        }
+        const previewText = `
+《三体》角色档案
+====================
+【身份】: ${selectedClass.name}
+【代号】: ${charName}
+【阵营】: ${faction}
+【活跃纪元】: ${era}
+【核心信念】
+${beliefInput.value || "（尚未填写）"}
+【角色背景与关键行动】
+${backgroundInput.value || "（尚未填写）"}
+【角色定位】
+你是${selectedClass.name}，${selectedClass.desc}
+你的行动将在这个时代留下印记。
+【代表人物参考】: ${selectedClass.representative}
+【你的信条】: ${selectedClass.quote}
+====================
+档案生成时间：${new Date().toLocaleString('zh-CN')}
+警告：不要暴露你的位置！
+        `.trim();
+        previewBox.textContent = previewText;
+    }
+    [nameInput, beliefInput, backgroundInput].forEach(el => {
+        el.addEventListener('input', updatePreview);
+    });
+    eraSelect.addEventListener('change', updatePreview);
+    charForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            await navigator.clipboard.writeText(previewBox.textContent);
+            const modal = document.getElementById('copy-modal');
+            modal.classList.add('visible');
+            setTimeout(() => {
+                modal.classList.remove('visible');
+            }, 3000);
+        } catch (err) {
+            console.error('复制失败: ', err);
+            const textArea = document.createElement('textarea');
+            textArea.value = previewBox.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const modal = document.getElementById('copy-modal');
+                modal.classList.add('visible');
+                setTimeout(() => {
+                    modal.classList.remove('visible');
+                }, 3000);
+            } catch (copyErr) {
+                alert('复制失败，请手动复制预览框中的文本');
+            }
+            document.body.removeChild(textArea);
+        }
+    });
+    const copyModal = document.getElementById('copy-modal');
+    const closeModalBtn = document.getElementById('modal-close');
+    closeModalBtn.addEventListener('click', () => {
+        copyModal.classList.remove('visible');
+    });
+    copyModal.addEventListener('click', (e) => {
+        if (e.target === copyModal) {
+            copyModal.classList.remove('visible');
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && previewBox.textContent) {
+            e.preventDefault();
+            navigator.clipboard.writeText(previewBox.textContent);
+            const originalText = copyModal.querySelector('p').textContent;
+            copyModal.querySelector('p').textContent = '角色档案已复制到剪贴板！';
+            copyModal.classList.add('visible');
+            setTimeout(() => {
+                copyModal.classList.remove('visible');
+                copyModal.querySelector('p').textContent = originalText;
+            }, 1500);
+        }
+    });
+    window.addEventListener('load', () => {
+        if (classCards.length > 0) {
+            const firstClass = classCards[0].getAttribute('data-class');
+            selectedClass = classData[firstClass];
+            updatePreview();
+        }
+    });
+});
+</script>
+</body>
+</html>

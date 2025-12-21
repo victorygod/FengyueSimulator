@@ -1,0 +1,434 @@
+<style id="installedBuiltInCss_css" type="text/css">/* =============================================
+ * 灰色风格聊天界面CSS样式表
+ * 包含：气泡美化、按钮样式、输入框设计、响应式布局
+ * =============================================
+ */
+
+/* 
+ * ---------------------------------
+ *   模块一：对话气泡美化 (AI侧) - 灰色风格
+ * ---------------------------------
+ */
+
+/* AI对话气泡容器样式 */
+#installedBuiltInCss .group .bg-gray-100\/90 {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.1) !important;
+    color: #1a1a1a !important;
+    padding: 12px !important;
+    text-shadow: none !important;
+}
+
+/* 
+ * ---------------------------------
+ *   模块二：平台按钮美化 - 灰色风格
+ * ---------------------------------
+ */
+
+/* 操作按钮基础样式 */
+#installedBuiltInCss .flex.items-center.gap-2.pb-2 > button {
+    background: #6c757d !important;
+    color: #ffffff !important;
+    border: 1px solid #5a6268 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 4px rgba(108, 117, 125, 0.3) !important;
+    font-weight: bold !important;
+    text-transform: none !important;
+    transition: all 0.2s ease-in-out !important;
+    padding: 6px 16px !important;
+}
+
+/* 按钮悬停状态样式 */
+#installedBuiltInCss .flex.items.center.gap-2.pb-2 > button:hover {
+    background: #5a6268 !important;
+    color: #ffffff !important;
+    border-color: #495057 !important;
+    box-shadow: 0 2px 6px rgba(108, 117, 125, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 
+ * ---------------------------------
+ *   模块四：输入栏美化 - 灰色风格
+ * ---------------------------------
+ */
+
+/* 聊天输入框基础样式 */
+#installedBuiltInCss #ai-chat-input {
+    background-color: #ffffff !important;
+    border: 1px solid #6c757d !important;
+    border-radius: 8px !important;
+    color: #1a1a1a !important;
+    box-shadow: 0 1px 4px rgba(108, 117, 125, 0.1) !important;
+}
+
+/* 输入框底部容器样式 */
+#installedBuiltInCss #ai-chat-bottom-input { 
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+/* 输入框占位符文字样式 */
+#installedBuiltInCss #ai-chat-input::placeholder {
+    color: #999999 !important;
+    opacity: 0.8 !important;
+}
+
+/* 输入框聚焦状态样式 */
+#installedBuiltInCss #ai-chat-input:focus {
+    outline: none !important;
+    border-color: #6c757d !important;
+    box-shadow: 0 0 8px rgba(108, 117, 125, 0.3) !important;
+    background-color: #f8f9fa !important;
+}
+
+/* 灰色风格分隔线 */
+#installedBuiltInCss .separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #6c757d, #6c757d, transparent);
+    border: none;
+    margin: 15px 0 10px 0;
+    filter: none;
+    opacity: 0.4;
+    border-radius: 1px;
+}
+
+/* 基础设置 - 详情框圆角 */
+#installedBuiltInCss details {
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+}
+
+/* 添加媒体查询适配移动端 */
+@media screen and (max-width: 768px) {
+    /* 移动端详情框样式 */
+    #installedBuiltInCss details {
+        padding: 0.3em;
+        margin: 0.5em 0;
+    }
+    
+    /* 移动端摘要标题样式 */
+    #installedBuiltInCss summary {
+        font-size: 14px;
+    }
+}
+
+/* 关闭状态详情框样式 */
+#installedBuiltInCss details:not([open]) {
+    height: auto;
+    overflow: hidden;
+}
+
+/* 摘要标题交互优化 */
+#installedBuiltInCss summary {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* 硬件加速优化 */
+#installedBuiltInCss details {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* 打开状态详情框样式 */
+#installedBuiltInCss details[open] {
+    min-height: 100px;
+    height: auto;
+}
+
+/* 通用盒模型设置 */
+#installedBuiltInCss * {
+    box-sizing: border-box;
+}
+
+/* 基础文字样式 */
+#installedBuiltInCss :root {
+    --main-font: "Microsoft YaHei", "Arial", sans-serif;
+    --base-size: 16px;
+    --pink-light: #adb5bd;
+    --pink-medium: #6c757d;
+    --pink-dark: #495057;
+    --pink-pale: #e9ecef;
+}
+
+/* 通用文字基础样式 */
+#installedBuiltInCss .base-text {
+    font-family: var(--main-font);
+    font-size: 16px;
+}
+
+/* 段落样式 */
+#installedBuiltInCss p {
+    font-family: var(--main-font);
+    line-height: 24px;
+    letter-spacing: 0.5px;
+}
+
+/* 一级标题样式 */
+#installedBuiltInCss h1 {
+    font-family: var(--main-font);
+    font-size: 16px;
+    border-top: 0.5em solid var(--pink-pale);
+    margin-top: 0;
+    padding-top: 0.5em;
+    color: var(--pink-medium);
+}
+
+/* 字体标签样式 */
+#installedBuiltInCss font {
+    font-family: var(--main-font);
+}
+
+/* 隐藏内存元素 */
+#installedBuiltInCss memory {
+    display: none;
+}
+
+/* 列表项样式 */
+#installedBuiltInCss li {
+    font-family: var(--main-font);
+    font-weight: bold;
+    list-style-type: disc;
+    color: var(--pink-medium);
+}
+
+/* 详情框样式 */
+#installedBuiltInCss details {
+    background: rgba(173, 181, 189, 0.1);
+    padding: 0.5em;
+    margin: 1em 0;
+    border-left: 0.3em solid var(--pink-light);
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+/* 详情框标题样式 */
+#installedBuiltInCss summary {
+    font-family: var(--main-font);
+    color: var(--pink-medium);
+    font-size: 0.8em;
+    cursor: pointer;
+    padding: 0.5em 0;
+    transition: color 0.3s ease;
+}
+
+/* 打开的详情框标题样式 */
+#installedBuiltInCss details[open] summary {
+    margin-bottom: 1em;
+    border-bottom: 0.1em solid rgba(173, 181, 189, 0.3);
+}
+
+/* 详情框悬停效果 */
+#installedBuiltInCss details:hover {
+    background: rgba(173, 181, 189, 0.2);
+}
+
+/* 容器 */
+#installedBuiltInCss #zuzuzuCss {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px;
+    gap: 25px;
+    background-color: #000000;
+    border-radius: 10px;
+}
+
+/* 图片容器基础样式 */
+#installedBuiltInCss #zuzuzuCss .zu-img {
+    width: 480px;
+    height: 650px;
+    border: 2px solid #000000;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+    background-color: #000000;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: block;
+}
+
+/* 平板设备 */
+@media screen and (max-width: 768px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 380px;
+        height: 550px;
+    }
+}
+
+/* 小屏手机 */
+@media screen and (max-width: 480px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 100%;
+        max-width: 380px;
+        height: auto;
+        aspect-ratio: 480/650;
+        min-height: 300px;
+    }
+    
+    #installedBuiltInCss #zuzuzuCss {
+        padding: 15px;
+        gap: 20px;
+    }
+}
+
+/* 中等屏幕 - 小笔记本 */
+@media screen and (min-width: 1024px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 540px;
+        height: 731px;
+    }
+    
+    #installedBuiltInCss #zuzuzuCss {
+        padding: 25px;
+        gap: 28px;
+    }
+}
+
+/* 大屏设备 - 桌面电脑 */
+@media screen and (min-width: 1280px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 560px;
+        height: 758px;
+    }
+    
+    #installedBuiltInCss #zuzuzuCss {
+        padding: 28px;
+        gap: 30px;
+    }
+}
+
+/* 超大屏设备 - 宽屏显示器 */
+@media screen and (min-width: 1440px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 580px;
+        height: 785px;
+    }
+    
+    #installedBuiltInCss #zuzuzuCss {
+        padding: 30px;
+        gap: 32px;
+    }
+}
+
+/* 超小屏手机 */
+@media screen and (max-width: 360px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        max-width: 320px;
+        aspect-ratio: 480/650;
+    }
+    
+    #installedBuiltInCss #zuzuzuCss {
+        padding: 10px;
+        gap: 15px;
+    }
+}
+
+/* 横屏显示优化 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: auto;
+        height: 80vh;
+        max-height: 400px;
+        aspect-ratio: 4/3;
+    }
+}
+
+/* 响应式设计：在小屏幕上调整图片尺寸 */
+@media (max-width: 600px) {
+    #installedBuiltInCss #zuzuzuCss .zu-img {
+        width: 90vw;
+        height: calc(90vw * 1.354);
+        max-width: 480px;
+        max-height: 650px;
+    }
+}
+
+/* ========== 更新后的82张图片CSS定义 ========== */
+#installedBuiltInCss #zuzuzuCss .img-001 { background-image: url('https://i.111666.best/image/SyZ6ARRWrx2OAFs5vbbYig.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-002 { background-image: url('https://i.111666.best/image/fr24DmhDKwwDNcoc5R7tb0.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-003 { background-image: url('https://i.111666.best/image/eXdVdYrZgO7y4GuQKMrWEp.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-004 { background-image: url('https://i.111666.best/image/iKG3gKwIb4uXr6Rf1mQs1W.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-005 { background-image: url('https://i.111666.best/image/uz0YxKWYg0WLk3Jk0CydtW.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-006 { background-image: url('https://i.111666.best/image/xJNnqhk95BNFghvzRRyfJf.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-007 { background-image: url('https://i.111666.best/image/2yjLBw6twrvGaMNv6hEH1o.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-008 { background-image: url('https://i.111666.best/image/FXokajlEgBkT05fvoWfT4e.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-009 { background-image: url('https://i.111666.best/image/6kOWGEkoh9srvDcldYfX8q.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-010 { background-image: url('https://i.111666.best/image/VTIx96xs1sAi2loYhj91dc.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-011 { background-image: url('https://i.111666.best/image/Xn7Kao7ByAiZaMwBbEsVJL.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-012 { background-image: url('https://i.111666.best/image/WW7kcl1yLA0CiFsyr0YDzv.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-013 { background-image: url('https://i.111666.best/image/tpJ4wtgqt1x8tnCVbbS7lG.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-014 { background-image: url('https://i.111666.best/image/uq83z2Jf7fhs78O4GpOm4d.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-015 { background-image: url('https://i.111666.best/image/pVI3XF9GmzFeuiSSM0NhFV.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-016 { background-image: url('https://i.111666.best/image/6YH08W60egk2nNwdvOSKiN.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-017 { background-image: url('https://i.111666.best/image/gCia5nc6IF6MDiQbyQHcPy.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-018 { background-image: url('https://i.111666.best/image/D1nvgSjVgsuAKSUE0klR1l.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-019 { background-image: url('https://i.111666.best/image/iasEeFk5Y8qiGBJmJYMBYH.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-020 { background-image: url('https://i.111666.best/image/eDRRi8VsVv0e0JqS3416c1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-021 { background-image: url('https://i.111666.best/image/XN3UuYsNE3XaULM7AgCrNy.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-022 { background-image: url('https://i.111666.best/image/jb4GQ1AWsszkHByfWEk9Ih.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-023 { background-image: url('https://i.111666.best/image/wD0D5tjdC9RlQD8YOPbPhR.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-024 { background-image: url('https://i.111666.best/image/6mBPcloKBchlhHBJg7aWVE.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-025 { background-image: url('https://i.111666.best/image/CY8y2xRujHEXXNwHDsd5jS.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-026 { background-image: url('https://i.111666.best/image/FbO9PKrxS3udQokDb1MsRi.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-027 { background-image: url('https://i.111666.best/image/Xu89UqZyrZVjL5PY8gZdeB.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-028 { background-image: url('https://i.111666.best/image/RQtNFjNPKhvHMcqw7yXQG0.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-029 { background-image: url('https://i.111666.best/image/qPRcw0eQFDZTcxER9kN0L1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-030 { background-image: url('https://i.111666.best/image/he9M98EJzZQJnR0sRK1lc8.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-031 { background-image: url('https://i.111666.best/image/DTrN2RewLh13lHLzH1LpxX.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-032 { background-image: url('https://i.111666.best/image/Whif1B6NJdEQy0fYsp0150.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-033 { background-image: url('https://i.111666.best/image/K3Fv1hbgMvqCFkk7jzbPIM.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-034 { background-image: url('https://i.111666.best/image/BvRUxAtZ12ptloyT3Rr1e1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-035 { background-image: url('https://i.111666.best/image/U6CxLvzfm5yu6TSDI2gzO3.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-036 { background-image: url('https://i.111666.best/image/oeK5v5pl6liGW8HNybumiO.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-037 { background-image: url('https://i.111666.best/image/ilygj7aDztKtqY6vZTx6cu.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-038 { background-image: url('https://i.111666.best/image/vQ5m2z5O3QOfYSCQ7eDISa.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-039 { background-image: url('https://i.111666.best/image/7encTIMMs3VDE6w08FJdW6.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-040 { background-image: url('https://i.111666.best/image/ROHt6gMbNz4DyhyTNMwDAK.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-041 { background-image: url('https://i.111666.best/image/45TwFPhBr7RkIlC0m5bvDQ.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-042 { background-image: url('https://i.111666.best/image/CcMAW3F8B5CukzyGGgqsmd.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-043 { background-image: url('https://i.111666.best/image/FkNHfkC8pP32WVNZ6RYvJc.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-044 { background-image: url('https://i.111666.best/image/qTSe21EHHxqRJmtFaxePJ1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-045 { background-image: url('https://i.111666.best/image/WcVbElwm4GOHBeD7DTlboS.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-046 { background-image: url('https://i.111666.best/image/kKYAgwPvihSUVEN8FA3RKk.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-047 { background-image: url('https://i.111666.best/image/uyLN1ECNLK2VGAtK85t5CE.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-048 { background-image: url('https://i.111666.best/image/qCYz5OXI4e2vepWIa3EZT2.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-049 { background-image: url('https://i.111666.best/image/9mIUUsuUQhhLKML4qmHu2x.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-050 { background-image: url('https://i.111666.best/image/SF1SEe9URGGc0YpalKJEO5.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-051 { background-image: url('https://i.111666.best/image/WDnM0ZwCRu2X1SL89zM2h4.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-052 { background-image: url('https://i.111666.best/image/65yqZx0d2kE5NwOZ1BKt2B.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-053 { background-image: url('https://i.111666.best/image/ZAJ4Lac6k8ep2gjWrPei7X.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-054 { background-image: url('https://i.111666.best/image/0EpwAPgYlaf44vUCfNRdRl.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-055 { background-image: url('https://i.111666.best/image/qv1ZozkfSHipkLHlxmXK53.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-056 { background-image: url('https://i.111666.best/image/RAMK5hKzaTJ5ABNi0o0CWw.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-057 { background-image: url('https://i.111666.best/image/VXyPWGbvsVJPuJrSHrBFnY.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-058 { background-image: url('https://i.111666.best/image/wzA8RvTn9VUyu6I1kvwBr1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-059 { background-image: url('https://i.111666.best/image/vjtpP9t2MAjBeLY6TH4qxg.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-060 { background-image: url('https://i.111666.best/image/d7EYzlxNu8sFz7ck7deVf1.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-061 { background-image: url('https://i.111666.best/image/Tat5dwy0ciZCiZkRaQbKJP.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-062 { background-image: url('https://i.111666.best/image/BakVmrpvwlteaB5wOpwtvF.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-063 { background-image: url('https://i.111666.best/image/q0mUabiQtYLsFWDOmHc9t9.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-064 { background-image: url('https://i.111666.best/image/XMzKLjaj9lMSOoFJGD4sqI.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-065 { background-image: url('https://i.111666.best/image/EhbxV5i4f3rASLZ4EH1AOT.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-066 { background-image: url('https://i.111666.best/image/cJqHFICDI1OaVcWOrVeKEt.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-067 { background-image: url('https://i.111666.best/image/KAHfLoPHTwA4Sm8B07WdRm.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-068 { background-image: url('https://i.111666.best/image/fQ7XOV2jkY0uIkCbI1HhVY.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-069 { background-image: url('https://i.111666.best/image/nHQBxhGDTWUlc0l3HF7e0v.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-070 { background-image: url('https://i.111666.best/image/W9aA4pjo2bjbG0l5R3Bri8.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-071 { background-image: url('https://i.111666.best/image/S5s8F8qK11wCjzYkM9nraX.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-072 { background-image: url('https://i.111666.best/image/qj2gYg5t80aG5AtzdplZzA.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-073 { background-image: url('https://i.111666.best/image/pXmJP5ZgUFs0j1Tkz1ViW7.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-074 { background-image: url('https://i.111666.best/image/ZdvhOQ6bWKatxBI91RY9wI.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-075 { background-image: url('https://i.111666.best/image/g4H1FsfTiaSMenwdoLqt5L.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-076 { background-image: url('https://i.111666.best/image/VWnwB0rZeDjElIDQg5DOE3.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-077 { background-image: url('https://i.111666.best/image/ZILBxjYYzMPMNaqMsommgx.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-078 { background-image: url('https://i.111666.best/image/2fs1wcUd20vWkTf9w5SqgF.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-079 { background-image: url('https://i.111666.best/image/JgC6pCgB95Xq3fpzHq0wRF.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-080 { background-image: url('https://i.111666.best/image/k1YjKciDflTTr74ppctpln.jpg'); }
+#installedBuiltInCss #zuzuzuCss .img-081 { background-image: url('https://i.111666.best/image/v9tSwQHbqHD2a5YktbwNLQ.jpg'); }</style>
